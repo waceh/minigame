@@ -51,49 +51,49 @@ function gameWin() {
 
 function gameLoop() {
     if (!gameRunning) return;
-    if (!gamePaused && !levelUpPaused) gameTime++;
-    if (player.invincible) {
-        player.invincibleTimer--;
-        if (player.invincibleTimer <= 0) player.invincible = false;
-    }
-    if (ultimateCooldown > 0) ultimateCooldown--;
-    if (ultimateActive) {
-        ultimateTimer--;
-        if (ultimateTimer <= 0) {
-            ultimateActive = false;
-            ultimateWaves = [];
-        } else {
-            if (selectedCharacter === 1) {
-                if (ultimateTimer % 20 === 0) {
-                    ultimateWaves.push({ x: player.x, y: player.y, radius: 0, maxRadius: 350, speed: 8, damage: 3 });
-                }
-                for (let i = ultimateWaves.length - 1; i >= 0; i--) {
-                    const wave = ultimateWaves[i];
-                    wave.radius += wave.speed;
-                    if (wave.radius >= wave.maxRadius) {
-                        ultimateWaves.splice(i, 1);
-                        continue;
+    if (!gamePaused && !levelUpPaused) {
+        gameTime++;
+        if (player.invincible) {
+            player.invincibleTimer--;
+            if (player.invincibleTimer <= 0) player.invincible = false;
+        }
+        if (ultimateCooldown > 0) ultimateCooldown--;
+        if (ultimateActive) {
+            ultimateTimer--;
+            if (ultimateTimer <= 0) {
+                ultimateActive = false;
+                ultimateWaves = [];
+            } else {
+                if (selectedCharacter === 1) {
+                    if (ultimateTimer % 20 === 0) {
+                        ultimateWaves.push({ x: player.x, y: player.y, radius: 0, maxRadius: 350, speed: 8, damage: 3 });
                     }
-                    monsters.forEach(monster => {
-                        const dist = Math.hypot(monster.x - wave.x, monster.y - wave.y);
-                        const prevDist = dist - wave.speed;
-                        if (prevDist < wave.radius && dist >= wave.radius - wave.speed && dist <= wave.radius + 10) {
-                            monster.health -= wave.damage;
+                    for (let i = ultimateWaves.length - 1; i >= 0; i--) {
+                        const wave = ultimateWaves[i];
+                        wave.radius += wave.speed;
+                        if (wave.radius >= wave.maxRadius) {
+                            ultimateWaves.splice(i, 1);
+                            continue;
                         }
-                    });
+                        monsters.forEach(monster => {
+                            const dist = Math.hypot(monster.x - wave.x, monster.y - wave.y);
+                            const prevDist = dist - wave.speed;
+                            if (prevDist < wave.radius && dist >= wave.radius - wave.speed && dist <= wave.radius + 10) {
+                                monster.health -= wave.damage;
+                            }
+                        });
+                    }
                 }
             }
         }
-    }
-    if (bossClearedTimer > 0) {
-        bossClearedTimer--;
-        if (bossClearedTimer <= 0) {
-            const nextWave = getCurrentWave() + 1;
-            const nextWaveStartSec = getWaveStartSec(nextWave);
-            gameTime = nextWaveStartSec * 60;
+        if (bossClearedTimer > 0) {
+            bossClearedTimer--;
+            if (bossClearedTimer <= 0) {
+                const nextWave = getCurrentWave() + 1;
+                const nextWaveStartSec = getWaveStartSec(nextWave);
+                gameTime = nextWaveStartSec * 60;
+            }
         }
-    }
-    if (!gamePaused && !levelUpPaused) {
         updatePlayer();
         monsterSpawnTimer++;
         if (monsterSpawnTimer >= monsterSpawnRate) {
