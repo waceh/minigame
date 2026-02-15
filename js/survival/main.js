@@ -7,6 +7,16 @@ window.addEventListener('keydown', (e) => {
         if (!levelUpPaused && gameRunning) gamePaused = !gamePaused;
         return;
     }
+    if (e.key === 'z' || e.key === 'Z') {
+        e.preventDefault();
+        if (gameRunning && !gamePaused && !levelUpPaused && !ultimateActive && ultimateCooldown <= 0) {
+            ultimateActive = true;
+            ultimateTimer = ULTIMATE_DURATION;
+            ultimateCooldown = ULTIMATE_COOLDOWN;
+            ultimateWaves = [];
+        }
+        return;
+    }
     keys[e.key] = true;
 });
 window.addEventListener('keyup', (e) => {
@@ -117,6 +127,10 @@ function resetToInitial() {
     player.knockbackVx = 0;
     player.knockbackVy = 0;
     player.knockbackPower = 0;
+    ultimateActive = false;
+    ultimateTimer = 0;
+    ultimateCooldown = 0;
+    ultimateWaves = [];
     initWeapons();
     document.getElementById('gameOver').classList.remove('show');
     const gameWinEl = document.getElementById('gameWin');
@@ -151,6 +165,10 @@ document.getElementById('restartBtn').addEventListener('click', () => {
     player.invincibleTimer = 0;
     player.knockbackVx = 0;
     player.knockbackVy = 0;
+    ultimateActive = false;
+    ultimateTimer = 0;
+    ultimateCooldown = 0;
+    ultimateWaves = [];
     gameWon = false;
     const gameWinEl = document.getElementById('gameWin');
     if (gameWinEl) { gameWinEl.style.display = 'none'; gameWinEl.classList.remove('show'); }

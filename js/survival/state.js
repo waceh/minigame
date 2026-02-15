@@ -74,6 +74,11 @@ let lastBossWave = 0;
 let gameWon = false;
 let bossClearedTimer = 0;
 
+let ultimateActive = false;
+let ultimateTimer = 0;
+let ultimateCooldown = 0;
+let ultimateWaves = [];
+
 function getWaveInfo() {
     const totalSec = Math.floor(gameTime / 60);
     const currentWave = getCurrentWave();

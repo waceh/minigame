@@ -190,9 +190,10 @@ function distToSegment(px, py, x1, y1, x2, y2) {
 }
 
 function updateWeapons() {
+    const cooldownRate = ultimateActive && selectedCharacter === 2 ? 2 : 1;
     weapons.forEach(weapon => {
         if (weapon.type === 'sword') {
-            weapon.cooldown--;
+            weapon.cooldown -= cooldownRate;
             const swingFrames = 12;
             if (!weapon.swingInstances) weapon.swingInstances = [];
             for (let i = weapon.swingInstances.length - 1; i >= 0; i--) {
@@ -237,7 +238,7 @@ function updateWeapons() {
             return;
         }
         if (weapon.type === 'whip') {
-            weapon.cooldown--;
+            weapon.cooldown -= cooldownRate;
             if (weapon.swingTimer > 0) weapon.swingTimer--;
             if (weapon.cooldown <= 0) {
                 weapon.cooldown = weapon.maxCooldown;
@@ -268,7 +269,7 @@ function updateWeapons() {
             return;
         }
         if (weapon.type === 'laser') {
-            weapon.cooldown--;
+            weapon.cooldown -= cooldownRate;
             if (weapon.cooldown <= 0) { weapon.cooldown = weapon.maxCooldown; weapon.beamTimer = 5; }
             if (weapon.beamTimer > 0) {
                 weapon.beamTimer--;
@@ -328,7 +329,7 @@ function updateWeapons() {
                 }
             }
         } else if (weapon.type === 'boomerang') {
-            weapon.cooldown--;
+            weapon.cooldown -= cooldownRate;
             const boomerangList = weapon.projectiles || [];
             const lowLevelWaitReturn = weapon.level <= 1 && boomerangList.length > 0;
             if (weapon.cooldown <= 0 && !lowLevelWaitReturn) {
@@ -350,7 +351,7 @@ function updateWeapons() {
                 });
             }
         } else if (weapon.type === 'projectile') {
-            weapon.cooldown--;
+            weapon.cooldown -= cooldownRate;
             if (weapon.cooldown <= 0) {
                 weapon.cooldown = weapon.maxCooldown;
                 let nearestMonster = null, nearestDist = Infinity;

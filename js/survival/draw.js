@@ -87,6 +87,30 @@ function drawGameUI() {
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 1;
     ctx.strokeRect(14, 58, barW, barH);
+    const ultBarW = 180, ultBarH = 12;
+    const ultBarX = 14, ultBarY = 72;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(ultBarX, ultBarY, ultBarW, ultBarH);
+    if (ultimateActive) {
+        const ratio = ultimateTimer / ULTIMATE_DURATION;
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(ultBarX, ultBarY, ultBarW * ratio, ultBarH);
+    } else if (ultimateCooldown > 0) {
+        const ratio = 1 - ultimateCooldown / ULTIMATE_COOLDOWN;
+        ctx.fillStyle = '#888';
+        ctx.fillRect(ultBarX, ultBarY, ultBarW * ratio, ultBarH);
+    } else {
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(ultBarX, ultBarY, ultBarW, ultBarH);
+    }
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(ultBarX, ultBarY, ultBarW, ultBarH);
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    const ultText = ultimateActive ? '필살기 활성' : ultimateCooldown > 0 ? `필살기 ${Math.ceil(ultimateCooldown / 60)}초` : '필살기 준비 (Z)';
+    ctx.fillText(ultText, ultBarX + 4, ultBarY + 9);
 }
 
 function drawLevelUpPanel() {
@@ -150,6 +174,33 @@ function draw() {
         ctx.moveTo(0, i);
         ctx.lineTo(canvas.width, i);
         ctx.stroke();
+    }
+    if (ultimateActive && selectedCharacter === 1) {
+        ultimateWaves.forEach(wave => {
+            const alpha = Math.max(0, 1 - wave.radius / wave.maxRadius);
+            ctx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.8})`;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+    }
+    if (ultimateActive && selectedCharacter === 2) {
+        const speedLines = 8;
+        for (let i = 0; i < speedLines; i++) {
+            const angle = (i / speedLines) * Math.PI * 2 + gameTime * 0.2;
+            const dist = 30 + Math.sin(gameTime * 0.1 + i) * 10;
+            const x1 = player.x + Math.cos(angle) * dist;
+            const y1 = player.y + Math.sin(angle) * dist;
+            const x2 = player.x + Math.cos(angle) * (dist + 15);
+            const y2 = player.y + Math.sin(angle) * (dist + 15);
+            ctx.strokeStyle = 'rgba(255, 200, 50, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
     }
     heartPickups.forEach(h => drawHeart(h.x, h.y, 14));
     expOrbs.forEach(orb => {
@@ -355,8 +406,14 @@ function draw() {
     });
     const blink = player.invincible && Math.floor(player.invincibleTimer / 5) % 2 === 0;
     if (!blink) {
-        const r = player.radius;
+        const baseR = player.radius;
+        const r = ultimateActive && selectedCharacter === 0 ? baseR * 3 : baseR;
         const imgReady = playerImage.complete && playerImage.naturalWidth > 0;
+        if (ultimateActive && selectedCharacter === 0) {
+            const glow = 0.5 + 0.3 * Math.sin(gameTime * 0.15);
+            ctx.shadowBlur = 30 + glow * 20;
+            ctx.shadowColor = '#ffd700';
+        }
         if (imgReady) {
             ctx.save();
             ctx.beginPath();
@@ -366,19 +423,20 @@ function draw() {
             ctx.drawImage(playerImage, player.x - r, player.y - r, r * 2, r * 2);
             ctx.restore();
         } else {
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = player.color;
+            ctx.shadowBlur = ultimateActive && selectedCharacter === 0 ? 30 : 20;
+            ctx.shadowColor = ultimateActive && selectedCharacter === 0 ? '#ffd700' : player.color;
             ctx.fillStyle = player.color;
             ctx.beginPath();
             ctx.arc(player.x, player.y, r, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
         }
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = ultimateActive && selectedCharacter === 0 ? '#ffd700' : '#fff';
+        ctx.lineWidth = ultimateActive && selectedCharacter === 0 ? 4 : 2;
         ctx.beginPath();
         ctx.arc(player.x, player.y, r, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.shadowBlur = 0;
     }
     const shotgunWeapon = weapons.find(w => w.type === 'shotgun');
     if (shotgunWeapon) {

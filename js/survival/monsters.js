@@ -270,7 +270,7 @@ function updateBossMissiles() {
             if (d < m.radius + player.radius) {
                 player.hp--;
                 player.invincible = true;
-                player.invincibleTimer = 180;
+                player.invincibleTimer = INVINCIBLE_DURATION;
                 const awayDist = Math.hypot(player.x - m.x, player.y - m.y) || 1;
                 player.knockbackVx = (player.knockbackVx || 0) + (player.x - m.x) / awayDist * 4;
                 player.knockbackVy = (player.knockbackVy || 0) + (player.y - m.y) / awayDist * 4;
@@ -313,12 +313,17 @@ function updateMonsters() {
                 monster.y += (towardY + perpY * wobble) * monster.speed;
             }
         }
-        if (player.invincible) return;
         const playerDist = Math.hypot(monster.x - player.x, monster.y - player.y);
+        const playerRadius = ultimateActive && selectedCharacter === 0 ? player.radius * 3 : player.radius;
+        if (ultimateActive && selectedCharacter === 0 && playerDist < monster.radius + playerRadius) {
+            monster.health = 0;
+            return;
+        }
+        if (player.invincible) return;
         if (playerDist < monster.radius + player.radius) {
             player.hp--;
             player.invincible = true;
-            player.invincibleTimer = 180;
+            player.invincibleTimer = INVINCIBLE_DURATION;
             if (playerDist > 0) {
                 const awayX = (player.x - monster.x) / playerDist;
                 const awayY = (player.y - monster.y) / playerDist;

@@ -17,8 +17,9 @@ function updatePlayer() {
         dx *= 0.707;
         dy *= 0.707;
     }
-    player.x += dx * player.speed;
-    player.y += dy * player.speed;
+    const speedMult = ultimateActive && selectedCharacter === 2 ? 2 : 1;
+    player.x += dx * player.speed * speedMult;
+    player.y += dy * player.speed * speedMult;
     player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
     player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
 }
@@ -54,6 +55,35 @@ function gameLoop() {
     if (player.invincible) {
         player.invincibleTimer--;
         if (player.invincibleTimer <= 0) player.invincible = false;
+    }
+    if (ultimateCooldown > 0) ultimateCooldown--;
+    if (ultimateActive) {
+        ultimateTimer--;
+        if (ultimateTimer <= 0) {
+            ultimateActive = false;
+            ultimateWaves = [];
+        } else {
+            if (selectedCharacter === 1) {
+                if (ultimateTimer % 20 === 0) {
+                    ultimateWaves.push({ x: player.x, y: player.y, radius: 0, maxRadius: 350, speed: 8, damage: 3 });
+                }
+                for (let i = ultimateWaves.length - 1; i >= 0; i--) {
+                    const wave = ultimateWaves[i];
+                    wave.radius += wave.speed;
+                    if (wave.radius >= wave.maxRadius) {
+                        ultimateWaves.splice(i, 1);
+                        continue;
+                    }
+                    monsters.forEach(monster => {
+                        const dist = Math.hypot(monster.x - wave.x, monster.y - wave.y);
+                        const prevDist = dist - wave.speed;
+                        if (prevDist < wave.radius && dist >= wave.radius - wave.speed && dist <= wave.radius + 10) {
+                            monster.health -= wave.damage;
+                        }
+                    });
+                }
+            }
+        }
     }
     if (bossClearedTimer > 0) {
         bossClearedTimer--;
