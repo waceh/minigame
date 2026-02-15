@@ -37,11 +37,17 @@ function spawnMonster() {
         case 3: x = -20; y = Math.random() * canvas.height; break;
     }
     const baseSpeed = (1.2 + (eff - 1) * 0.12) * diff.speedMult * waveMult;
-    let health = 1 + Math.floor((eff - 1) / 2) + Math.floor(eff * 0.7);
-    let radius = 12 + (eff - 1) * 0.4;
-    if (currentWave >= 6) {
-        health = Math.floor(health * 1.5);
-        radius = radius * 1.25;
+    let health, radius;
+    if (currentWave <= 4) {
+        health = 1;
+        radius = 12;
+    } else {
+        health = 1 + Math.floor((eff - 1) / 2) + Math.floor(eff * 0.7);
+        radius = 12 + (eff - 1) * 0.4;
+        if (currentWave >= 6) {
+            health = Math.floor(health * 1.5);
+            radius = radius * 1.25;
+        }
     }
     const expValue = health + Math.floor(eff - 1);
     const driftAngle = Math.random() * Math.PI * 2;
