@@ -1,6 +1,45 @@
 /**
  * 배경, 오브젝트, UI, 레벨업 패널 렌더링
  */
+function getWeaponLevelColor(weapon, baseColor, baseStroke) {
+    const level = weapon.level || 1;
+    const pulse = 0.7 + 0.3 * Math.sin(gameTime * 0.15);
+    if (level >= 15) {
+        const hue = (gameTime * 3) % 360;
+        return {
+            fill: `hsla(${hue}, 80%, 60%, 0.9)`,
+            stroke: `hsla(${(hue + 60) % 360}, 90%, 50%, ${pulse})`,
+            lineWidth: 3,
+            glow: true,
+            glowColor: `hsl(${hue}, 100%, 70%)`
+        };
+    } else if (level >= 10) {
+        const alternate = Math.floor(gameTime / 10) % 2 === 0;
+        return {
+            fill: alternate ? '#ff6b6b' : '#ffd93d',
+            stroke: alternate ? '#ffd93d' : '#ff6b6b',
+            lineWidth: 2.5,
+            glow: true,
+            glowColor: alternate ? '#ff6b6b' : '#ffd93d'
+        };
+    } else if (level >= 5) {
+        return {
+            fill: '#ff6b6b',
+            stroke: `rgba(255, 50, 50, ${pulse})`,
+            lineWidth: 2,
+            glow: true,
+            glowColor: '#ff3333'
+        };
+    } else {
+        return {
+            fill: baseColor,
+            stroke: baseStroke,
+            lineWidth: weapon.type === 'orbit' ? 2 : 1.5,
+            glow: false
+        };
+    }
+}
+
 function drawHeart(x, y, size) {
     if (heartImage.complete && heartImage.naturalWidth > 0) {
         ctx.drawImage(heartImage, x - size, y - size, size * 2, size * 2);
@@ -289,14 +328,20 @@ function draw() {
         weapon.projectiles.forEach(projectile => {
             const r = projectile.radius;
             if (weapon.type === 'shotgun') {
+                const colors = getWeaponLevelColor(weapon, '#ffcc66', '#cc9933');
                 ctx.save();
-                ctx.fillStyle = '#ffcc66';
-                ctx.strokeStyle = '#cc9933';
-                ctx.lineWidth = 1;
+                if (colors.glow) {
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = colors.glowColor;
+                }
+                ctx.fillStyle = colors.fill;
+                ctx.strokeStyle = colors.stroke;
+                ctx.lineWidth = colors.lineWidth;
                 ctx.beginPath();
                 ctx.arc(projectile.x, projectile.y, r, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
+                ctx.shadowBlur = 0;
                 ctx.restore();
                 return;
             }
@@ -304,12 +349,17 @@ function draw() {
                 ? Math.atan2(player.y - projectile.y, player.x - projectile.x)
                 : Math.atan2(projectile.vy, projectile.vx);
             const isBoomerang = weapon.type === 'boomerang';
+            const colors = getWeaponLevelColor(weapon, isBoomerang ? '#9b59b6' : '#00d4ff', isBoomerang ? '#8e44ad' : '#7df9ff');
             ctx.save();
+            if (colors.glow) {
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = colors.glowColor;
+            }
             ctx.translate(projectile.x, projectile.y);
             ctx.rotate(angle);
-            ctx.fillStyle = isBoomerang ? '#9b59b6' : '#00d4ff';
-            ctx.strokeStyle = isBoomerang ? '#8e44ad' : '#7df9ff';
-            ctx.lineWidth = 1.5;
+            ctx.fillStyle = colors.fill;
+            ctx.strokeStyle = colors.stroke;
+            ctx.lineWidth = colors.lineWidth;
             if (isBoomerang) {
                 ctx.beginPath();
                 ctx.arc(0, 0, r * 1.4, -Math.PI / 2, Math.PI / 2);
@@ -323,6 +373,7 @@ function draw() {
                 ctx.fill();
                 ctx.stroke();
             }
+            ctx.shadowBlur = 0;
             ctx.restore();
         });
     });
@@ -330,31 +381,43 @@ function draw() {
         if (weapon.type !== 'orbit') return;
         const r = weapon.orbRadius;
         const imgReady = orbitImage.complete && orbitImage.naturalWidth > 0;
+        const colors = getWeaponLevelColor(weapon, '#f1c40f', '#f39c12');
         weapon.orbAngles.forEach(angle => {
             const ox = player.x + Math.cos(angle) * weapon.radius;
             const oy = player.y + Math.sin(angle) * weapon.radius;
+            ctx.save();
+            if (colors.glow) {
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = colors.glowColor;
+            }
             if (imgReady) {
-                ctx.save();
                 ctx.beginPath();
                 ctx.arc(ox, oy, r, 0, Math.PI * 2);
                 ctx.closePath();
                 ctx.clip();
                 ctx.drawImage(orbitImage, ox - r, oy - r, r * 2, r * 2);
                 ctx.restore();
-                ctx.strokeStyle = '#f39c12';
-                ctx.lineWidth = 2;
+                ctx.save();
+                if (colors.glow) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = colors.glowColor;
+                }
+                ctx.strokeStyle = colors.stroke;
+                ctx.lineWidth = colors.lineWidth;
                 ctx.beginPath();
                 ctx.arc(ox, oy, r, 0, Math.PI * 2);
                 ctx.stroke();
             } else {
-                ctx.fillStyle = '#f1c40f';
-                ctx.strokeStyle = '#f39c12';
-                ctx.lineWidth = 2;
+                ctx.fillStyle = colors.fill;
+                ctx.strokeStyle = colors.stroke;
+                ctx.lineWidth = colors.lineWidth;
                 ctx.beginPath();
                 ctx.arc(ox, oy, r, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
             }
+            ctx.shadowBlur = 0;
+            ctx.restore();
         });
     });
     weapons.forEach(weapon => {
@@ -362,12 +425,20 @@ function draw() {
             const angle = getPlayerLastMoveAngle();
             const ex = player.x + Math.cos(angle) * weapon.range;
             const ey = player.y + Math.sin(angle) * weapon.range;
-            ctx.strokeStyle = 'rgba(255, 150, 200, 0.6)';
-            ctx.lineWidth = 4;
+            const colors = getWeaponLevelColor(weapon, '#ff96c8', '#ff69b4');
+            ctx.save();
+            if (colors.glow) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = colors.glowColor;
+            }
+            ctx.strokeStyle = colors.stroke.includes('rgba') ? colors.stroke : colors.stroke.replace(')', ', 0.7)').replace('hsl', 'hsla');
+            ctx.lineWidth = 4 + (weapon.level >= 5 ? 1 : 0);
             ctx.beginPath();
             ctx.moveTo(player.x, player.y);
             ctx.lineTo(ex, ey);
             ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.restore();
         }
     });
     weapons.forEach(weapon => {
@@ -397,11 +468,19 @@ function draw() {
     weapons.forEach(weapon => {
         if (weapon.type === 'whip' && weapon.swingTimer > 0) {
             const angle = getPlayerLastMoveAngle();
-            ctx.strokeStyle = 'rgba(255, 200, 100, 0.8)';
-            ctx.lineWidth = 12;
+            const colors = getWeaponLevelColor(weapon, '#ffc864', '#ff9933');
+            ctx.save();
+            if (colors.glow) {
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = colors.glowColor;
+            }
+            ctx.strokeStyle = colors.stroke.includes('rgba') ? colors.stroke : colors.stroke.replace(')', ', 0.8)').replace('hsl', 'hsla');
+            ctx.lineWidth = 12 + (weapon.level >= 10 ? 2 : weapon.level >= 5 ? 1 : 0);
             ctx.beginPath();
             ctx.arc(player.x, player.y, weapon.range, angle - weapon.arcAngle / 2, angle + weapon.arcAngle / 2);
             ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.restore();
         }
     });
     const blink = player.invincible && Math.floor(player.invincibleTimer / 5) % 2 === 0;
