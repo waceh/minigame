@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사다리 타기</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <h1>사다리 타기</h1>
+            <div class="game-actions">
+                <a href="index.html" class="game-action-btn">메뉴로 가기</a>
+                <button type="button" id="ladderExit" class="game-action-btn">초기화</button>
+            </div>
+        </div>
+
+        <div class="ladder-settings">
+            <label for="lineCount">라인 개수</label>
+            <select id="lineCount">
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+            <label for="rungCount">가로선 개수</label>
+            <select id="rungCount">
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6" selected>6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+            </select>
+            <button type="button" class="btn-apply" id="ladderApply">사다리 만들기</button>
+        </div>
+
+        <div class="ladder-wrap">
+            <canvas id="ladderCanvas"></canvas>
+            <div class="ladder-result-overlay" id="ladderResultOverlay"></div>
+        </div>
+        <div class="ladder-result" id="result"></div>
+        <div class="ladder-actions">
+            <button type="button" id="ladderReset" class="game-action-btn">다시 하기</button>
+            <button type="button" id="ladderShowWin" class="game-action-btn">당첨보기</button>
+        </div>
+        <div class="instructions">
+            <p>라인·가로선 개수를 정하고 사다리 만들기 → 당첨칸에 입력 → 캔버스 상단 번호를 클릭하면 공이 굴러갑니다</p>
+        </div>
+    </div>
+    <script src="js/ladder/ladder.js"></script>
+</body>
+</html>

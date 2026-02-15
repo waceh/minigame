@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>룰렛 뽑기</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <h1>룰렛 뽑기</h1>
+            <div class="game-actions">
+                <a href="index.html" class="game-action-btn">메뉴로 가기</a>
+                <button type="button" id="rouletteReset" class="game-action-btn">초기화</button>
+            </div>
+        </div>
+
+        <div class="roulette-settings">
+            <label for="rouletteInput">이름 입력 (아래에 입력)</label>
+            <p class="roulette-hint">쉼표 또는 줄바꿈으로 구분. <code>이름*개수</code> = 해당 이름을 개수만큼 반복 (예: 수박*2, 키위*2, 귤*2 → 수박 2칸, 키위 2칸, 귤 2칸). 서로 다른 항목은 그냥 나열 (예: 사과, 배, 귤, 수박)</p>
+            <textarea id="rouletteInput" rows="4" placeholder="사과, 배, 귤, 수박"></textarea>
+            <button type="button" class="btn-apply" id="rouletteStart">Shuffle Start</button>
+        </div>
+
+        <div class="roulette-wrap">
+            <canvas id="rouletteCanvas"></canvas>
+            <div class="roulette-pointer"></div>
+        </div>
+        <div class="roulette-result" id="rouletteResult">The winner is</div>
+        <div class="roulette-winner" id="rouletteWinner"></div>
+        <div class="instructions">
+            <p>이름을 입력한 뒤 Shuffle Start를 누르면 룰렛이 돌아가고 당첨자가 나옵니다</p>
+        </div>
+    </div>
+    <script src="js/roulette/roulette.js"></script>
+</body>
+</html>

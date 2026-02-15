@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서바이벌 - 생존 게임</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container survival-container">
+        <div class="game-header">
+            <div class="game-header-top">
+                <h1>서바이벌</h1>
+                <div class="difficulty-display" id="difficultyDisplay"></div>
+            </div>
+            <div class="game-header-bar">
+                <div class="score-board">
+                    <span class="score">점수: <span id="score">0</span></span>
+                    <span class="high-score">최고: <span id="highScore">0</span></span>
+                </div>
+                <div class="game-actions">
+                    <button type="button" id="menuBtn" class="game-action-btn">메뉴로 가기</button>
+                    <button type="button" id="exitBtn" class="game-action-btn">초기화</button>
+                </div>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="character-select-overlay show" id="characterSelectOverlay">
+            <h2>캐릭터 선택</h2>
+            <div class="overlay-difficulty">
+                <span>난이도:</span>
+                <button type="button" class="diff-btn overlay-diff" data-diff="easy">이지</button>
+                <button type="button" class="diff-btn overlay-diff active" data-diff="normal">노멀</button>
+                <button type="button" class="diff-btn overlay-diff" data-diff="hard">하드</button>
+            </div>
+            <div class="character-cards" id="characterCards"></div>
+            <button type="button" id="overlayMenuBtn" class="game-action-btn character-select-menu-btn">메뉴로 나가기</button>
+        </div>
+        <div class="game-over" id="gameOver">
+            <h2>게임 오버!</h2>
+            <p>최종 점수: <span id="finalScore">0</span></p>
+            <button id="restartBtn">다시 시작</button>
+        </div>
+        <div class="game-over game-win" id="gameWin" style="display: none;">
+            <h2>웨이브 20 클리어!</h2>
+            <p>최종 점수: <span id="winScore">0</span></p>
+            <button id="winMenuBtn" class="game-action-btn">메뉴로 가기</button>
+            <button id="winRestartBtn">다시 시작</button>
+        </div>
+        <div class="instructions">방향키/WASD 이동 · 스페이스 멈춤/재개 · 몬스터 처치→경험치 수집→레벨업 시 1·2·3 키로 강화</div>
+    </div>
+    <script src="js/survival/config.js"></script>
+    <script src="js/survival/state.js"></script>
+    <script src="js/survival/items.js"></script>
+    <script src="js/survival/weapons.js"></script>
+    <script src="js/survival/monsters.js"></script>
+    <script src="js/survival/levelup.js"></script>
+    <script src="js/survival/draw.js"></script>
+    <script src="js/survival/game-loop.js"></script>
+    <script src="js/survival/main.js"></script>
+</body>
+</html>
