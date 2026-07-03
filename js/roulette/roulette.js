@@ -122,7 +122,7 @@ function spin() {
     const winnerIndex = Math.floor(Math.random() * pool.length);
     const winnerName = String(pool[winnerIndex] ?? '?');
     const segmentAngle = (Math.PI * 2) / pool.length;
-    const extraTurns = 5 + Math.random() * 2;
+    const extraTurns = 5 + Math.floor(Math.random() * 3);
     const twoPi = Math.PI * 2;
     const targetAngle = -Math.PI / 2 - (winnerIndex * segmentAngle + segmentAngle / 2);
     const remainder = mod(currentRotation, twoPi);
