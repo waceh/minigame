@@ -77,7 +77,12 @@ function drawWheel(rotation) {
         ctx.rotate(midAngle + Math.PI / 2);
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px Arial';
+        
+        let fontSize = 14;
+        if (n > 20) fontSize = 9;
+        else if (n > 12) fontSize = 11;
+        ctx.font = `bold ${fontSize}px Arial`;
+
         const label = pool[i].length > 8 ? pool[i].slice(0, 7) + '…' : pool[i];
         ctx.fillText(label, 0, 4);
         ctx.restore();
@@ -99,10 +104,20 @@ function easeOutCubic(t) {
 }
 
 function spin() {
+    let text = inputEl.value.trim();
+    if (!text) {
+        text = '사과, 배, 귤, 수박';
+        inputEl.value = text;
+        pool = parseInput(text);
+        drawWheel(0);
+    }
     if (animating || pool.length === 0) return;
     animating = true;
     startBtn.disabled = true;
+    inputEl.disabled = true;
     winnerEl.textContent = '';
+
+    const mod = (a, n) => ((a % n) + n) % n;
 
     const winnerIndex = Math.floor(Math.random() * pool.length);
     const winnerName = String(pool[winnerIndex] ?? '?');
@@ -110,8 +125,8 @@ function spin() {
     const extraTurns = 5 + Math.random() * 2;
     const twoPi = Math.PI * 2;
     const targetAngle = -Math.PI / 2 - (winnerIndex * segmentAngle + segmentAngle / 2);
-    const remainder = ((currentRotation % twoPi) + twoPi) % twoPi;
-    const shortDelta = (targetAngle - remainder + twoPi) % twoPi;
+    const remainder = mod(currentRotation, twoPi);
+    const shortDelta = mod(targetAngle - remainder, twoPi);
     const finalRotation = currentRotation + (extraTurns * twoPi) + shortDelta;
 
     const duration = 4000;
@@ -120,6 +135,7 @@ function spin() {
     const rotDelta = finalRotation - currentRotation;
 
     function tick(now) {
+        if (!animating) return;
         const elapsed = now - startTime;
         const t = Math.min(1, elapsed / duration);
         const eased = easeOutCubic(t);
@@ -131,6 +147,7 @@ function spin() {
         } else {
             animating = false;
             startBtn.disabled = false;
+            inputEl.disabled = false;
             resultEl.textContent = 'The winner is';
             winnerEl.textContent = winnerName;
             winnerEl.classList.add('roulette-winner-show');
@@ -140,10 +157,15 @@ function spin() {
 }
 
 function init() {
-    const text = inputEl.value.trim();
+    let text = inputEl.value.trim();
+    if (!text) {
+        text = '사과, 배, 귤, 수박';
+        inputEl.value = text;
+    }
     pool = parseInput(text);
     currentRotation = 0;
     drawWheel(0);
+    inputEl.disabled = false;
     winnerEl.classList.remove('roulette-winner-show');
     winnerEl.textContent = '';
     resultEl.textContent = pool.length > 0 ? 'The winner is' : '';

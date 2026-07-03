@@ -63,7 +63,7 @@ function getColumnFromCanvasXY(canvasX, canvasY) {
     return col;
 }
 
-function init() {
+function init(keepRungs = false) {
     N = getN();
     results = getResultsFromInputs();
     if (results.length !== N) {
@@ -84,32 +84,39 @@ function init() {
         overlay.style.height = canvas.height + 'px';
     }
     const inputs = overlay ? overlay.querySelectorAll('input') : [];
+    const inputWidth = Math.max(40, Math.min(90, colWidth - 8));
     for (let i = 0; i < inputs.length && i < N; i++) {
         const centerX = colWidth * (i + 1);
         inputs[i].style.left = centerX + 'px';
-        inputs[i].style.width = Math.min(90, colWidth - 8) + 'px';
+        inputs[i].style.width = inputWidth + 'px';
     }
 
     disabledColumns.clear();
     lastPath = null;
-    rungs = [];
     arrivalLabels = {};
-    document.querySelectorAll('#ladderResultOverlay input').forEach(inp => { inp.disabled = false; });
+    document.querySelectorAll('#ladderResultOverlay input').forEach(inp => { 
+        inp.disabled = false; 
+        inp.classList.remove('ladder-input-glow');
+    });
     const lineCountEl = document.getElementById('lineCount');
     const rungCountEl = document.getElementById('rungCount');
     if (lineCountEl) lineCountEl.disabled = false;
     if (rungCountEl) rungCountEl.disabled = false;
-    const rungCount = getRungCount();
-    const gap = (BOTTOM_Y - TOP_Y) / (rungCount + 1);
-    for (let row = 0; row < rungCount; row++) {
-        const y = TOP_Y + gap * (row + 1);
-        const count = 1 + Math.floor(Math.random() * 2);
-        const used = new Set();
-        for (let k = 0; k < count; k++) {
-            const col = Math.floor(Math.random() * (N - 1));
-            if (used.has(col)) continue;
-            used.add(col);
-            rungs.push({ left: col, right: col + 1, y });
+
+    if (!keepRungs) {
+        rungs = [];
+        const rungCount = getRungCount();
+        const gap = (BOTTOM_Y - TOP_Y) / (rungCount + 1);
+        for (let row = 0; row < rungCount; row++) {
+            const y = TOP_Y + gap * (row + 1);
+            const count = 1 + Math.floor(Math.random() * 2);
+            const used = new Set();
+            for (let k = 0; k < count; k++) {
+                const col = Math.floor(Math.random() * (N - 1));
+                if (used.has(col)) continue;
+                used.add(col);
+                rungs.push({ left: col, right: col + 1, y });
+            }
         }
     }
     draw();
@@ -324,6 +331,11 @@ function runBall(startLine) {
                 inputs[endLine].classList.add('ladder-input-glow');
                 setTimeout(() => inputs[endLine].classList.remove('ladder-input-glow'), 2500);
             }
+            if (lineCountEl) lineCountEl.disabled = false;
+            if (rungCountEl) rungCountEl.disabled = false;
+            inputs.forEach(inp => {
+                inp.disabled = false;
+            });
             return;
         }
         draw(v.value.x, v.value.y, v.value.scale, v.value.pathSoFar || null);
@@ -362,7 +374,7 @@ document.getElementById('ladderApply').addEventListener('click', apply);
 document.getElementById('ladderExit').addEventListener('click', () => apply());
 document.getElementById('ladderReset').addEventListener('click', () => {
     results = getResultsFromInputs();
-    init();
+    init(true);
 });
 document.getElementById('ladderShowWin').addEventListener('click', () => {
     if (animating) return;
@@ -378,7 +390,23 @@ document.getElementById('ladderShowWin').addEventListener('click', () => {
         const inputs = document.querySelectorAll('#ladderResultOverlay input');
         results.forEach((val, i) => { if (inputs[i]) inputs[i].value = val; });
     }
-    const winEndCol = results.findIndex(v => (v || '').trim() === '당첨');
+    
+    // Smart win-column detection
+    let winEndCol = results.findIndex(v => {
+        const t = (v || '').trim();
+        return t === '당첨' || t === '1등' || t === '합격' || t === '통과' || t === '성공' || t === '선물' || t === 'win' || t === 'winner';
+    });
+    if (winEndCol < 0) {
+        const losingKeywords = ['꽝', '탈락', '벌칙', '실패', 'fail', 'lose'];
+        winEndCol = results.findIndex(v => {
+            const t = (v || '').trim();
+            return t !== '' && !losingKeywords.includes(t);
+        });
+    }
+    if (winEndCol < 0) {
+        winEndCol = results.findIndex(v => (v || '').trim() !== '');
+    }
+
     if (winEndCol < 0) {
         document.getElementById('result').textContent = '당첨이 없습니다.';
         setTimeout(() => { document.getElementById('result').textContent = ''; }, 2000);
