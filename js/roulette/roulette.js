@@ -200,7 +200,7 @@ function spin() {
 
     function tick(now) {
         if (!animating) return;
-        const elapsed = now - startTime;
+        let elapsed = now - startTime;
         
         if (duration <= T_slow && !isDecelerating) {
             const t = Math.min(1, elapsed / duration);
@@ -226,6 +226,7 @@ function spin() {
                     
                     startTime = startTime + t1;
                     duration = T_slow;
+                    elapsed = now - startTime; // Update elapsed to prevent immediate animation termination
                     
                     currentRotation = decelStartRot;
                 }
