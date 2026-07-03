@@ -117,35 +117,85 @@ function spin() {
     startBtn.disabled = true;
     inputEl.disabled = true;
     if (durationEl) durationEl.disabled = true;
+    
     winnerEl.textContent = '';
+    winnerEl.classList.remove('roulette-pulse');
+    winnerEl.classList.remove('winner-celebrate');
+    winnerEl.classList.add('roulette-winner-show');
+    resultEl.textContent = '남은 시간';
+    let lastCountdownVal = -1;
 
     const mod = (a, n) => ((a % n) + n) % n;
 
     const winnerIndex = Math.floor(Math.random() * pool.length);
     const winnerName = String(pool[winnerIndex] ?? '?');
     const segmentAngle = (Math.PI * 2) / pool.length;
-    const extraTurns = 5 + Math.floor(Math.random() * 3);
+    
+    const inputDurationSec = durationEl ? parseFloat(durationEl.value) : 4;
+    const duration = (isNaN(inputDurationSec) || inputDurationSec <= 0) ? 4000 : inputDurationSec * 1000;
+    
+    // Scale extra turns dynamically with duration to keep a fast spin speed
+    const spinsPerSecond = 3.0;
+    const baseTurns = Math.max(3, Math.floor(spinsPerSecond * (duration / 1000)));
+    const extraTurns = baseTurns + Math.floor(Math.random() * 2);
+    
     const twoPi = Math.PI * 2;
     const targetAngle = -Math.PI / 2 - (winnerIndex * segmentAngle + segmentAngle / 2);
     const remainder = mod(currentRotation, twoPi);
     const shortDelta = mod(targetAngle - remainder, twoPi);
     const finalRotation = currentRotation + (extraTurns * twoPi) + shortDelta;
 
-    const inputDurationSec = durationEl ? parseFloat(durationEl.value) : 4;
-    const duration = (isNaN(inputDurationSec) || inputDurationSec <= 0) ? 4000 : inputDurationSec * 1000;
     const startTime = performance.now();
     const startRot = currentRotation;
     const rotDelta = finalRotation - currentRotation;
 
+    // Deceleration config (constant speed -> deceleration during the last 5 seconds)
+    const T_slow = 5000; 
+    const t1 = duration - T_slow;
+    let w0 = 0;
+    let deltaTheta = 0;
+    
+    if (duration > T_slow) {
+        w0 = rotDelta / (t1 + T_slow / 3);
+        deltaTheta = rotDelta - w0 * t1;
+    }
+
     function tick(now) {
         if (!animating) return;
         const elapsed = now - startTime;
-        const t = Math.min(1, elapsed / duration);
-        const eased = easeOutCubic(t);
-        currentRotation = startRot + rotDelta * eased;
+        
+        // 1. Calculate wheel rotation position
+        if (duration <= T_slow) {
+            // Normal easeOutCubic for shorter durations
+            const t = Math.min(1, elapsed / duration);
+            const eased = easeOutCubic(t);
+            currentRotation = startRot + rotDelta * eased;
+        } else {
+            // Two-phase rotation for longer durations (constant fast -> 5s deceleration)
+            if (elapsed < t1) {
+                currentRotation = startRot + w0 * elapsed;
+            } else {
+                const t_decel = Math.min(1, (elapsed - t1) / T_slow);
+                const eased_decel = 1 - Math.pow(1 - t_decel, 3); // cubic ease out
+                currentRotation = (startRot + w0 * t1) + deltaTheta * eased_decel;
+            }
+        }
+        
         drawWheel(currentRotation);
 
-        if (t < 1) {
+        // 2. Calculate remaining seconds for countdown
+        const remainingSec = Math.max(0, (duration - elapsed) / 1000);
+        const currentCeil = Math.ceil(remainingSec);
+        
+        if (currentCeil !== lastCountdownVal && currentCeil > 0) {
+            lastCountdownVal = currentCeil;
+            winnerEl.textContent = currentCeil + '초';
+            winnerEl.classList.remove('roulette-pulse');
+            void winnerEl.offsetWidth; // trigger reflow to restart css animation
+            winnerEl.classList.add('roulette-pulse');
+        }
+
+        if (elapsed < duration) {
             requestAnimationFrame(tick);
         } else {
             animating = false;
@@ -154,7 +204,10 @@ function spin() {
             if (durationEl) durationEl.disabled = false;
             resultEl.textContent = 'The winner is';
             winnerEl.textContent = winnerName;
-            winnerEl.classList.add('roulette-winner-show');
+            winnerEl.classList.remove('roulette-pulse');
+            winnerEl.classList.remove('winner-celebrate');
+            void winnerEl.offsetWidth; // trigger reflow
+            winnerEl.classList.add('winner-celebrate');
         }
     }
     requestAnimationFrame(tick);
