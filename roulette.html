@@ -22,10 +22,13 @@
             <textarea id="rouletteInput" rows="4" placeholder="사과, 배, 귤, 수박"></textarea>
             <div class="roulette-options">
                 <label for="rouletteDuration">돌아가는 시간:</label>
-                <input type="number" id="rouletteDuration" min="1" max="30" value="4">
+                <input type="number" id="rouletteDuration" min="1" max="30" value="10">
                 <span>초</span>
             </div>
-            <button type="button" class="btn-apply" id="rouletteStart">Shuffle Start</button>
+            <div class="roulette-buttons" style="display: flex; gap: 10px;">
+                <button type="button" class="btn-apply" id="rouletteStart">Shuffle Start</button>
+                <button type="button" class="btn-stop" id="rouletteStop" style="display: none;">바로 멈춤</button>
+            </div>
         </div>
 
         <div class="roulette-wrap">

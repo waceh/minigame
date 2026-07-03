@@ -617,4 +617,26 @@ body {
     animation: winnerCelebrate 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+.btn-stop {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 71, 87, 0.5);
+    background: rgba(255, 71, 87, 0.15);
+    color: #ff4757;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
+}
+.btn-stop:hover {
+    background: rgba(255, 71, 87, 0.3);
+    color: #ff6b81;
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+}
+.btn-stop:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
 
