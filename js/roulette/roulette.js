@@ -111,10 +111,12 @@ function spin() {
         pool = parseInput(text);
         drawWheel(0);
     }
+    const durationEl = document.getElementById('rouletteDuration');
     if (animating || pool.length === 0) return;
     animating = true;
     startBtn.disabled = true;
     inputEl.disabled = true;
+    if (durationEl) durationEl.disabled = true;
     winnerEl.textContent = '';
 
     const mod = (a, n) => ((a % n) + n) % n;
@@ -129,7 +131,8 @@ function spin() {
     const shortDelta = mod(targetAngle - remainder, twoPi);
     const finalRotation = currentRotation + (extraTurns * twoPi) + shortDelta;
 
-    const duration = 4000;
+    const inputDurationSec = durationEl ? parseFloat(durationEl.value) : 4;
+    const duration = (isNaN(inputDurationSec) || inputDurationSec <= 0) ? 4000 : inputDurationSec * 1000;
     const startTime = performance.now();
     const startRot = currentRotation;
     const rotDelta = finalRotation - currentRotation;
@@ -148,6 +151,7 @@ function spin() {
             animating = false;
             startBtn.disabled = false;
             inputEl.disabled = false;
+            if (durationEl) durationEl.disabled = false;
             resultEl.textContent = 'The winner is';
             winnerEl.textContent = winnerName;
             winnerEl.classList.add('roulette-winner-show');
@@ -166,6 +170,8 @@ function init() {
     currentRotation = 0;
     drawWheel(0);
     inputEl.disabled = false;
+    const durationEl = document.getElementById('rouletteDuration');
+    if (durationEl) durationEl.disabled = false;
     winnerEl.classList.remove('roulette-winner-show');
     winnerEl.textContent = '';
     resultEl.textContent = pool.length > 0 ? 'The winner is' : '';

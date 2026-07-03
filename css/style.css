@@ -570,3 +570,32 @@ body {
     .mobile-upgrades button { min-height: 44px; min-width: 44px; padding: 6px 10px; }
     .mobile-upgrades button[hidden] { display: none; }
 }
+.roulette-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0 8px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.95rem;
+}
+.roulette-options input[type="number"] {
+    width: 60px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    background: rgba(30, 30, 50, 0.95);
+    color: white;
+    font-size: 0.95rem;
+    text-align: center;
+}
+.roulette-options input[type="number"]:focus {
+    border-color: #ffd700;
+    outline: none;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+.roulette-options input[type="number"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
