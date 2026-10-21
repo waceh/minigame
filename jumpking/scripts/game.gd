@@ -31,20 +31,24 @@ static func build_course() -> Array[Rect2]:
 		for ledge in range(1, BASE_PLATFORMS.size()):
 			var original: Rect2 = BASE_PLATFORMS[ledge]
 			var progress := tier * (BASE_PLATFORMS.size() - 1) + ledge - 1
-			var narrowing := float(progress) * 0.5
+			var difficulty := float(progress) / float(COURSE_TIERS * (BASE_PLATFORMS.size() - 1) - 1)
+			var ledge_width: float = original.size.x + lerpf(28.0, -40.0, difficulty)
 			course.append(Rect2(
-				original.position.x + narrowing * 0.5,
+				original.position.x + (original.size.x - ledge_width) * 0.5,
 				original.position.y - float(tier) * TIER_HEIGHT,
-				original.size.x - narrowing,
+				ledge_width,
 				original.size.y
 			))
 	return course
 
 var player: CharacterBody2D
+var camera: Camera2D
 var height_label: Label
 var message_label: Label
 var best_height := 0
 var won := false
+var shake_strength := 0.0
+var shake_time := 0.0
 
 func _ready() -> void:
 	for platform: Rect2 in PLATFORMS:
@@ -60,7 +64,9 @@ func _ready() -> void:
 	player = Player.new()
 	player.position = Vector2(460, 470)
 	add_child(player)
-	var camera := Camera2D.new()
+	player.connect("launched", _on_player_launched)
+	player.connect("landed", _on_player_landed)
+	camera = Camera2D.new()
 	camera.position = Vector2(0, -75)
 	camera.limit_left = 0
 	camera.limit_right = 960
@@ -70,6 +76,18 @@ func _ready() -> void:
 	player.add_child(camera)
 	camera.make_current()
 	make_hud()
+
+func _process(delta: float) -> void:
+	shake_time += delta
+	shake_strength = move_toward(shake_strength, 0.0, delta * 15.0)
+	if camera:
+		camera.offset = Vector2(sin(shake_time * 47.0), cos(shake_time * 39.0)) * shake_strength
+
+func _on_player_launched() -> void:
+	shake_strength = 2.0
+
+func _on_player_landed(strength: float) -> void:
+	shake_strength = 3.0 + strength * 5.0
 
 func make_hud() -> void:
 	var layer := CanvasLayer.new()

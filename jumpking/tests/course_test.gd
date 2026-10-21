@@ -11,6 +11,9 @@ func _initialize() -> void:
 	if Game.PLATFORMS[-1].position.y > -7800.0:
 		_fail("The finish must be about five times higher")
 		return
+	if Game.PLATFORMS[1].size.x < 160.0 or Game.PLATFORMS[-1].size.x > 65.0:
+		_fail("The opening must be forgiving and the finish narrow")
+		return
 	for tier in range(1, Game.COURSE_TIERS):
 		for ledge in ledges_per_tier:
 			var previous: Rect2 = Game.PLATFORMS[1 + (tier - 1) * ledges_per_tier + ledge]
