@@ -71,7 +71,7 @@ function init() {
         results.length = N;
     }
     CANVAS_HEIGHT = Math.min(700, Math.max(450, window.innerHeight * 0.5));
-    CANVAS_WIDTH = Math.min(960, Math.max(560, (window.innerWidth || 800) * 0.88));
+    CANVAS_WIDTH = Math.min(1100, Math.max(560, N * 95, (window.innerWidth || 800) * 0.88));
     TOP_Y = 50;
     BOTTOM_Y = CANVAS_HEIGHT - 50;
     colWidth = CANVAS_WIDTH / (N + 1);
@@ -87,6 +87,7 @@ function init() {
     for (let i = 0; i < inputs.length && i < N; i++) {
         const centerX = colWidth * (i + 1);
         inputs[i].style.left = centerX + 'px';
+        inputs[i].style.width = Math.min(90, colWidth - 8) + 'px';
     }
 
     disabledColumns.clear();

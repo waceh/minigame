@@ -25,6 +25,26 @@
             </div>
         </div>
         <canvas id="gameCanvas"></canvas>
+        <div class="mobile-controls" aria-label="터치 게임 조작">
+            <div class="mobile-pad">
+                <button type="button" class="touch-move up" data-key="ArrowUp" aria-label="위로 이동">▲</button>
+                <button type="button" class="touch-move left" data-key="ArrowLeft" aria-label="왼쪽으로 이동">◀</button>
+                <button type="button" class="touch-move down" data-key="ArrowDown" aria-label="아래로 이동">▼</button>
+                <button type="button" class="touch-move right" data-key="ArrowRight" aria-label="오른쪽으로 이동">▶</button>
+            </div>
+            <div class="mobile-control-actions">
+                <button type="button" id="touchPause">일시정지</button>
+                <button type="button" id="touchUltimate">필살기</button>
+            </div>
+        </div>
+        <div class="mobile-upgrades" aria-label="레벨업 강화 선택">
+            <span>레벨업 선택</span>
+            <button type="button" data-choice="0">1</button>
+            <button type="button" data-choice="1">2</button>
+            <button type="button" data-choice="2">3</button>
+            <button type="button" data-choice="3">4</button>
+            <button type="button" data-choice="skip">건너뛰기</button>
+        </div>
         <div class="character-select-overlay show" id="characterSelectOverlay">
             <h2>캐릭터 선택</h2>
             <div class="overlay-difficulty">
@@ -47,7 +67,7 @@
             <button id="winMenuBtn" class="game-action-btn">메뉴로 가기</button>
             <button id="winRestartBtn">다시 시작</button>
         </div>
-        <div class="instructions">방향키/WASD 이동 · 스페이스 멈춤/재개 · 몬스터 처치→경험치 수집→레벨업 시 1·2·3 키로 강화</div>
+        <div class="instructions">방향키/WASD 또는 화면 버튼으로 이동 · 스페이스/일시정지 · Z/필살기 · 경험치 수집 후 숫자 버튼으로 강화</div>
     </div>
     <script src="js/survival/config.js"></script>
     <script src="js/survival/state.js"></script>

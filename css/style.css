@@ -18,6 +18,8 @@ body {
     position: relative;
     text-align: center;
     padding: 20px;
+    width: 100%;
+    max-width: 1040px;
 }
 
 .game-header {
@@ -341,6 +343,11 @@ body {
     padding: 0;
     position: relative;
 }
+.ladder-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 .ladder-result-overlay {
     position: absolute;
     left: 0;
@@ -450,6 +457,7 @@ body {
     position: relative;
     margin: 0 auto 16px;
     display: inline-block;
+    width: min(100%, 380px);
 }
 #rouletteCanvas {
     border: 3px solid white;
@@ -457,6 +465,8 @@ body {
     background: #1a1a2e;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     display: block;
+    width: 100%;
+    height: auto;
 }
 .roulette-pointer {
     position: absolute;
@@ -490,4 +500,73 @@ body {
 .roulette-winner.roulette-winner-show {
     opacity: 1;
     transform: scale(1);
+}
+
+.mobile-controls, .mobile-upgrades { display: none; }
+
+@media (max-width: 700px), (pointer: coarse) {
+    body { align-items: flex-start; }
+    .container { padding: 12px; }
+    .game-header h1 { font-size: 1.4rem; }
+    .game-header-top, .game-header-bar { flex-wrap: wrap; }
+    .game-actions { justify-content: center; flex-wrap: wrap; }
+    .game-action-btn, .diff-btn, .ladder-settings .btn-apply,
+    .roulette-settings .btn-apply { min-height: 44px; }
+    .ladder-settings { gap: 10px; padding: 12px; }
+    .ladder-result-overlay input { font-size: 16px; }
+    .roulette-settings { padding: 12px; }
+    .survival-container { max-height: none; overflow: visible; }
+    .survival-container #gameCanvas { max-width: 100%; height: auto; max-height: none; }
+    .character-select-overlay { padding: 16px; justify-content: flex-start; overflow-y: auto; }
+    .character-select-overlay h2 { font-size: 1.5rem; margin-bottom: 12px; }
+    .character-cards { gap: 10px; }
+    .character-card { width: min(100%, 280px); padding: 12px; }
+    .character-card .char-thumb { width: 48px; height: 48px; margin-bottom: 6px; }
+    .character-card .char-trait { margin-bottom: 6px; }
+    .character-select-menu-btn { margin-top: 12px; }
+    .game-over { width: min(92%, 360px); padding: 20px; }
+    .game-over h2 { font-size: 1.8rem; }
+    .game-over p { font-size: 1.1rem; }
+    .mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+        margin-top: 12px;
+        touch-action: none;
+    }
+    .mobile-pad {
+        display: grid;
+        grid-template: repeat(3, 48px) / repeat(3, 48px);
+        gap: 3px;
+    }
+    .mobile-pad .up { grid-area: 1 / 2; }
+    .mobile-pad .left { grid-area: 2 / 1; }
+    .mobile-pad .down { grid-area: 2 / 2; }
+    .mobile-pad .right { grid-area: 2 / 3; }
+    .mobile-control-actions { display: flex; flex-direction: column; gap: 8px; }
+    .mobile-controls button, .mobile-upgrades button {
+        min-width: 48px;
+        min-height: 48px;
+        border: 2px solid rgba(255,255,255,.6);
+        border-radius: 10px;
+        background: rgba(30,30,50,.8);
+        color: white;
+        font-size: 1rem;
+        touch-action: none;
+    }
+    .mobile-controls button.pressed, .mobile-controls button:active,
+    .mobile-upgrades button:active { background: #667eea; }
+    .mobile-upgrades.show {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .mobile-upgrades span { width: 100%; font-size: .85rem; }
+    .mobile-upgrades button { min-height: 44px; min-width: 44px; padding: 6px 10px; }
+    .mobile-upgrades button[hidden] { display: none; }
 }

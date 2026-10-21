@@ -18,6 +18,7 @@ body {
     text-align: center;
     padding: 40px 24px;
     max-width: 480px;
+    width: 100%;
 }
 
 .main-container h1 {
@@ -82,4 +83,28 @@ body {
     margin-left: 44px;
     font-size: 0.9rem;
     color: #999;
+}
+
+.site-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 12px;
+    margin-top: 36px;
+    color: #aeb7c8;
+    font-size: 0.85rem;
+}
+
+.site-footer a {
+    color: inherit;
+}
+
+@media (max-width: 600px) {
+    body { align-items: flex-start; }
+    .main-container { padding: 32px 16px; }
+    .main-container h1 { font-size: 1.9rem; }
+    .subtitle { margin-bottom: 24px; }
+    .game-card { padding: 16px; min-height: 74px; }
+    .game-desc { margin-left: 44px; }
+    .site-footer { margin-top: 28px; line-height: 1.5; }
 }

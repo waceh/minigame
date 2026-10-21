@@ -1,23 +1,66 @@
 /**
  * 입력, 난이도 선택, 재시작, 게임 시작
  */
+function useUltimate() {
+    if (gameRunning && !gamePaused && !levelUpPaused && !ultimateActive && ultimateCooldown <= 0) {
+        ultimateActive = true;
+        ultimateTimer = ULTIMATE_DURATION;
+        ultimateCooldown = ULTIMATE_COOLDOWN;
+        ultimateWaves = [];
+    }
+}
+
+function togglePause() {
+    if (!levelUpPaused && gameRunning) {
+        gamePaused = !gamePaused;
+        document.getElementById('touchPause').textContent = gamePaused ? '계속하기' : '일시정지';
+    }
+}
+
 window.addEventListener('keydown', (e) => {
     if (e.key === ' ') {
         e.preventDefault();
-        if (!levelUpPaused && gameRunning) gamePaused = !gamePaused;
+        togglePause();
         return;
     }
     if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault();
-        if (gameRunning && !gamePaused && !levelUpPaused && !ultimateActive && ultimateCooldown <= 0) {
-            ultimateActive = true;
-            ultimateTimer = ULTIMATE_DURATION;
-            ultimateCooldown = ULTIMATE_COOLDOWN;
-            ultimateWaves = [];
-        }
+        useUltimate();
         return;
     }
     keys[e.key] = true;
+});
+
+document.querySelectorAll('.touch-move').forEach(button => {
+    const key = button.dataset.key;
+    button.addEventListener('pointerdown', event => {
+        event.preventDefault();
+        button.setPointerCapture(event.pointerId);
+        keys[key] = true;
+        button.classList.add('pressed');
+    });
+    const release = event => {
+        event.preventDefault();
+        keys[key] = false;
+        button.classList.remove('pressed');
+    };
+    button.addEventListener('pointerup', release);
+    button.addEventListener('pointercancel', release);
+    button.addEventListener('lostpointercapture', release);
+});
+document.getElementById('touchPause').addEventListener('click', togglePause);
+document.getElementById('touchUltimate').addEventListener('click', useUltimate);
+document.querySelectorAll('.mobile-upgrades button').forEach(button => {
+    button.addEventListener('click', () => {
+        if (!levelUpPaused) return;
+        if (button.dataset.choice === 'skip') {
+            pendingLevelUpChoices = [];
+            levelUpPaused = false;
+            document.querySelector('.mobile-upgrades').classList.remove('show');
+        } else {
+            applyLevelUpChoice(Number(button.dataset.choice));
+        }
+    });
 });
 window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
@@ -26,7 +69,7 @@ window.addEventListener('keyup', (e) => {
             const idx = parseInt(e.key, 10) - 1;
             if (idx < pendingLevelUpChoices.length) applyLevelUpChoice(idx);
         }
-        else if (e.key === '5') { pendingLevelUpChoices = []; levelUpPaused = false; }
+        else if (e.key === '5') { pendingLevelUpChoices = []; levelUpPaused = false; document.querySelector('.mobile-upgrades').classList.remove('show'); }
     }
 });
 
@@ -103,6 +146,8 @@ const overlayMenuBtn = document.getElementById('overlayMenuBtn');
 if (overlayMenuBtn) overlayMenuBtn.addEventListener('click', goToMenu);
 
 function resetToInitial() {
+    document.querySelector('.mobile-upgrades').classList.remove('show');
+    document.getElementById('touchPause').textContent = '일시정지';
     gameRunning = false;
     gamePaused = false;
     score = 0;
@@ -144,7 +189,10 @@ const exitBtn = document.getElementById('exitBtn');
 if (exitBtn) exitBtn.addEventListener('click', resetToInitial);
 
 document.getElementById('restartBtn').addEventListener('click', () => {
+    document.querySelector('.mobile-upgrades').classList.remove('show');
+    document.getElementById('touchPause').textContent = '일시정지';
     gameRunning = true;
+    gamePaused = false;
     score = 0;
     gameTime = 0;
     level = 1;

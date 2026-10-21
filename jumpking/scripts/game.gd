@@ -65,11 +65,42 @@ func make_hud() -> void:
 
 	message_label = Label.new()
 	message_label.position = Vector2(24, 54)
-	message_label.text = "A/D 이동 · 스페이스 충전 · 방향키 누른 채 떼어 점프 · 공중 조작 불가 · R 재시작"
+	message_label.text = "화면 버튼으로 이동 · 점프를 누른 채 방향을 정하고 떼기 · 공중 조작 불가" if DisplayServer.is_touchscreen_available() else "A/D 이동 · 스페이스 충전 · 방향키 누른 채 떼어 점프 · 공중 조작 불가 · R 재시작"
 	message_label.add_theme_font_size_override("font_size", 16)
 	message_label.add_theme_font_override("font", GameFont)
 	message_label.add_theme_color_override("font_color", Color("c5d4e8"))
 	layer.add_child(message_label)
+	add_touch_button(layer, "move_left", Vector2(30, 402), "left")
+	add_touch_button(layer, "move_right", Vector2(170, 402), "right")
+	add_touch_button(layer, "jump", Vector2(795, 402), "up")
+
+func add_touch_button(layer: CanvasLayer, action_name: String, button_position: Vector2, direction: String) -> void:
+	var button := TouchScreenButton.new()
+	button.action = action_name
+	button.position = button_position
+	button.texture_normal = make_touch_texture(direction)
+	button.visibility_mode = TouchScreenButton.VISIBILITY_TOUCHSCREEN_ONLY
+	layer.add_child(button)
+
+func make_touch_texture(direction: String) -> ImageTexture:
+	var image := Image.create(108, 108, false, Image.FORMAT_RGBA8)
+	var triangle := PackedVector2Array()
+	match direction:
+		"left":
+			triangle = PackedVector2Array([Vector2(28, 54), Vector2(70, 25), Vector2(70, 83)])
+		"right":
+			triangle = PackedVector2Array([Vector2(80, 54), Vector2(38, 25), Vector2(38, 83)])
+		_:
+			triangle = PackedVector2Array([Vector2(54, 20), Vector2(24, 74), Vector2(84, 74)])
+	for y in 108:
+		for x in 108:
+			var point := Vector2(x, y)
+			if point.distance_to(Vector2(54, 54)) <= 51.0:
+				image.set_pixel(x, y, Color(0.12, 0.20, 0.32, 0.78))
+			if Geometry2D.is_point_in_polygon(point, triangle):
+				image.set_pixel(x, y, Color("f7e8bb"))
+	image.resize(132, 132, Image.INTERPOLATE_BILINEAR)
+	return ImageTexture.create_from_image(image)
 
 func _physics_process(_delta: float) -> void:
 	best_height = maxi(best_height, roundi(500.0 - player.position.y))

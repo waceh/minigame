@@ -21,6 +21,15 @@ function showLevelUpChoices() {
         pendingLevelUpChoices.push(opt);
     }
     levelUpChoiceCount = 3;
+    const mobileChoices = document.querySelector('.mobile-upgrades');
+    mobileChoices.classList.add('show');
+    mobileChoices.querySelectorAll('[data-choice]').forEach(button => {
+        const index = Number(button.dataset.choice);
+        if (Number.isNaN(index)) return;
+        const option = pendingLevelUpChoices[index];
+        button.hidden = !option;
+        if (option) button.textContent = `${index + 1}. ${option.name}${option.detail ? ` · ${option.detail}` : ''}`;
+    });
 }
 
 function applyLevelUpChoice(index) {
@@ -30,4 +39,5 @@ function applyLevelUpChoice(index) {
     if (index === 3 && pendingLevelUpChoices.length >= 4) opt.apply();
     pendingLevelUpChoices = [];
     levelUpPaused = false;
+    document.querySelector('.mobile-upgrades').classList.remove('show');
 }

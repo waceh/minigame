@@ -43,9 +43,11 @@
             <button type="button" class="btn-apply" id="ladderApply">사다리 만들기</button>
         </div>
 
-        <div class="ladder-wrap">
-            <canvas id="ladderCanvas"></canvas>
-            <div class="ladder-result-overlay" id="ladderResultOverlay"></div>
+        <div class="ladder-scroll" aria-label="사다리 게임판, 좌우로 스크롤할 수 있습니다">
+            <div class="ladder-wrap">
+                <canvas id="ladderCanvas"></canvas>
+                <div class="ladder-result-overlay" id="ladderResultOverlay"></div>
+            </div>
         </div>
         <div class="ladder-result" id="result"></div>
         <div class="ladder-actions">
@@ -53,7 +55,7 @@
             <button type="button" id="ladderShowWin" class="game-action-btn">당첨보기</button>
         </div>
         <div class="instructions">
-            <p>라인·가로선 개수를 정하고 사다리 만들기 → 당첨칸에 입력 → 캔버스 상단 번호를 클릭하면 공이 굴러갑니다</p>
+            <p>라인·가로선 개수를 정하고 사다리 만들기 → 당첨칸에 입력 → 캔버스 상단 번호를 누르면 공이 굴러갑니다. 작은 화면에서는 게임판을 좌우로 밀어 보세요.</p>
         </div>
     </div>
     <script src="js/ladder/ladder.js"></script>

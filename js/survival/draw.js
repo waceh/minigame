@@ -153,6 +153,7 @@ function drawGameUI() {
 }
 
 function drawLevelUpPanel() {
+    if (window.matchMedia('(max-width: 700px), (pointer: coarse)').matches) return;
     const rowHeight = 52;
     const panelH = pendingLevelUpChoices.length >= 4 ? 332 : 280;
     const baseY = canvas.height / 2 - panelH / 2 + 95;
