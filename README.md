@@ -1,6 +1,6 @@
 # 🎮 미니게임 모음
 
-HTML5 캔버스 기반의 웹 미니게임 모음집입니다. 별도의 설치 없이 브라우저에서 바로 플레이할 수 있습니다.
+브라우저에서 즐기는 미니게임 모음집입니다. HTML5 캔버스 게임과 Godot 게임을 함께 담고 있습니다.
 
 👉 **[지금 바로 플레이하기](https://waceh.github.io/minigame/)**
 
@@ -54,6 +54,16 @@ HTML5 캔버스 기반의 웹 미니게임 모음집입니다. 별도의 설치 
 수박*2, 키위*2, 귤*2
 ```
 
+### 4. 하늘 발판 (Godot)
+좁은 발판에 착지하며 정상까지 올라가는 충전식 점프 게임입니다. 충전 중에는 움직일 수 없고, 점프한 뒤에는 방향을 바꿀 수 없습니다. 발판은 아래에서 통과할 수 없으며 실수하면 아래 구간으로 떨어집니다.
+
+**조작법:**
+- 이동: A/D 또는 좌우 방향키
+- 점프: 스페이스를 길게 누른 뒤, 원하는 방향키를 누른 채 떼기 (방향키 없이 떼면 수직 점프)
+- 다시 시작: R
+
+Godot 4.5 프로젝트 원본은 `jumpking/`에, 웹 빌드는 `jumpking/web/`에 있습니다. 게임을 수정한 뒤에는 Godot에서 프로젝트를 열고 **프로젝트 > 내보내기 > Web**으로 다시 빌드할 수 있습니다.
+
 ## 🚀 실행 방법
 
 ### 로컬 실행
@@ -95,6 +105,8 @@ minigame/
 ├── survival.html           # 서바이벌 게임
 ├── ladder.html             # 사다리 타기
 ├── roulette.html           # 룰렛 뽑기
+├── jumpking.html           # Godot 게임 페이지
+├── jumpking/               # 하늘 발판 Godot 프로젝트 및 웹 빌드
 ├── css/
 │   ├── main.css           # 메인 페이지 스타일
 │   └── style.css          # 게임 공통 스타일
@@ -119,9 +131,12 @@ minigame/
 ## 🛠️ 기술 스택
 
 - HTML5 Canvas
+- Godot 4.5 (Web 내보내기)
 - Vanilla JavaScript (ES6+)
 - CSS3
 
 ## 📝 라이선스
+
+하늘 발판의 한글 글꼴은 [Noto Sans KR](https://github.com/google/fonts/tree/main/ofl/notosanskr)을 사용하며, 라이선스는 `jumpking/fonts/OFL.txt`에 있습니다.
 
 이 프로젝트는 개인 학습 및 포트폴리오 목적으로 제작되었습니다.
