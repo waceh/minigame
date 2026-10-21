@@ -15,8 +15,15 @@
         .game-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
         .game-shell { background: #101c30; }
         .game-shell:fullscreen, .game-shell:-webkit-full-screen, .fullscreen-fallback .game-shell {
-            position: fixed; inset: 0; z-index: 1000; width: 100%; height: 100%;
+            position: fixed; inset: 0; z-index: 1000; width: 100%; height: 100dvh;
             display: flex; flex-direction: column; padding: 8px; overflow: hidden;
+        }
+        .game-shell.landscape-portrait:fullscreen, .game-shell.landscape-portrait:-webkit-full-screen,
+        .fullscreen-fallback .game-shell.landscape-portrait {
+            inset: auto; top: 50%; left: 50%;
+            width: 100dvh; height: 100vw;
+            transform: translate(-50%, -50%) rotate(90deg);
+            transform-origin: center;
         }
         .game-shell:fullscreen iframe, .game-shell:-webkit-full-screen iframe, .fullscreen-fallback .game-shell iframe {
             flex: 1; min-height: 0; height: 100%; aspect-ratio: auto; border-radius: 0;
@@ -40,17 +47,20 @@
         <h1>하늘 발판</h1>
         <div class="game-shell" id="gameShell">
             <div class="game-tools"><button type="button" id="fullscreenBtn">전체 화면</button><button type="button" id="restartBtn">다시 시작</button></div>
-            <iframe id="gameFrame" src="jumpking/web/index.html" title="하늘 발판 Godot 게임" allow="autoplay; fullscreen"></iframe>
+            <iframe id="gameFrame" src="jumpking/web/index.html?v=1.1.24" title="하늘 발판 Godot 게임" allow="autoplay; fullscreen"></iframe>
         </div>
         <p class="mobile-tip">휴대폰에서는 ◀ ▶ 버튼으로 방향을 정하고, ▲ 버튼을 누른 뒤 떼면 바라보는 방향으로 점프합니다. 가로 화면과 전체 화면을 권장합니다.</p>
-        <p>발판을 딛고 정상까지 올라가세요. A/D 또는 ←/→로 방향을 정하고, 스페이스를 누른 뒤 떼면 바라보는 방향으로 점프합니다. 충전 중에는 걷지 못하고 공중에서도 방향을 바꿀 수 없습니다. 실패하면 아래로 떨어집니다.</p>
+        <p>높이 올라갈수록 좁아지는 발판을 딛고 정상까지 올라가세요. A/D 또는 ←/→로 방향을 정하고, 스페이스를 누른 뒤 떼면 바라보는 방향으로 점프합니다. 충전 중에는 걷지 못하고 공중에서도 방향을 바꿀 수 없습니다. 실패하면 아래로 떨어집니다.</p>
     </main>
     <script>
         const gameFrame = document.getElementById('gameFrame');
         const gameShell = document.getElementById('gameShell');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
-        function updateFullscreenButton() {
-            fullscreenBtn.textContent = document.fullscreenElement || document.body.classList.contains('fullscreen-fallback') ? '전체 화면 종료' : '전체 화면';
+        function updateFullscreenLayout() {
+            const expanded = document.fullscreenElement === gameShell || document.body.classList.contains('fullscreen-fallback');
+            gameShell.classList.toggle('landscape-portrait', expanded && matchMedia('(orientation: portrait) and (pointer: coarse)').matches);
+            fullscreenBtn.textContent = expanded ? '전체 화면 종료' : '전체 화면';
+            if (!expanded) screen.orientation?.unlock?.();
         }
         fullscreenBtn.addEventListener('click', async () => {
             if (document.fullscreenElement) {
@@ -61,17 +71,22 @@
                 try {
                     if (!gameShell.requestFullscreen) throw new Error('Fullscreen API unavailable');
                     await gameShell.requestFullscreen();
+                    if (matchMedia('(pointer: coarse)').matches && screen.orientation?.lock) {
+                        screen.orientation.lock('landscape').catch(() => {});
+                    }
                 } catch {
                     document.body.classList.add('fullscreen-fallback');
                 }
             }
-            updateFullscreenButton();
+            updateFullscreenLayout();
         });
-        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('fullscreenchange', updateFullscreenLayout);
+        window.addEventListener('resize', updateFullscreenLayout);
+        window.addEventListener('orientationchange', updateFullscreenLayout);
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && document.body.classList.contains('fullscreen-fallback')) {
                 document.body.classList.remove('fullscreen-fallback');
-                updateFullscreenButton();
+                updateFullscreenLayout();
             }
         });
         document.getElementById('restartBtn').addEventListener('click', () => { gameFrame.src = gameFrame.src; });

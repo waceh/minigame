@@ -40,8 +40,30 @@ func _run() -> void:
 			return
 	for i in 2:
 		await physics_frame
+	if game.won:
+		push_error("The first tier must not complete the longer course")
+		quit(1)
+		return
+	var penultimate: Rect2 = game.PLATFORMS[-2]
+	var finish: Rect2 = game.PLATFORMS[-1]
+	game.player.position = Vector2(penultimate.get_center().x, penultimate.position.y - 15.0)
+	game.player.velocity = Vector2.ZERO
+	for i in 3:
+		await physics_frame
+	Input.action_press("jump")
+	Input.action_press("move_left")
+	for i in 55:
+		await physics_frame
+	Input.action_release("jump")
+	for i in 90:
+		await physics_frame
+		if game.player.is_on_floor() and absf(game.player.position.y - (finish.position.y - 15.0)) < 2.0:
+			break
+	Input.action_release("move_left")
+	for i in 2:
+		await physics_frame
 	if not game.won:
-		push_error("Landing on the final ledge should complete the game")
+		push_error("Landing on the narrow final ledge should complete the game")
 		quit(1)
 		return
 	print("climb_test: PASS (all ledges reached)")

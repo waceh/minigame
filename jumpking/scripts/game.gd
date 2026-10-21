@@ -2,7 +2,9 @@ extends Node2D
 
 const Player = preload("res://scripts/player.gd")
 const GameFont = preload("res://fonts/NotoSansKR.ttf")
-const PLATFORMS := [
+const COURSE_TIERS := 5
+const TIER_HEIGHT := 1680.0
+const BASE_PLATFORMS := [
 	Rect2(0, 500, 960, 40),
 	Rect2(580, 400, 140, 18),
 	Rect2(390, 295, 115, 18),
@@ -21,6 +23,22 @@ const PLATFORMS := [
 	Rect2(650, -1070, 95, 18),
 	Rect2(450, -1175, 100, 18)
 ]
+static var PLATFORMS: Array[Rect2] = build_course()
+
+static func build_course() -> Array[Rect2]:
+	var course: Array[Rect2] = [BASE_PLATFORMS[0]]
+	for tier in COURSE_TIERS:
+		for ledge in range(1, BASE_PLATFORMS.size()):
+			var original: Rect2 = BASE_PLATFORMS[ledge]
+			var progress := tier * (BASE_PLATFORMS.size() - 1) + ledge - 1
+			var narrowing := float(progress) * 0.5
+			course.append(Rect2(
+				original.position.x + narrowing * 0.5,
+				original.position.y - float(tier) * TIER_HEIGHT,
+				original.size.x - narrowing,
+				original.size.y
+			))
+	return course
 
 var player: CharacterBody2D
 var height_label: Label
@@ -115,17 +133,18 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		get_tree().reload_current_scene()
 
 func _draw() -> void:
-	draw_rect(Rect2(0, -1600, 960, 2140), Color("14233b"))
-	for i in 16:
-		var y := -1500.0 + i * 145.0
+	var world_top: float = PLATFORMS[-1].position.y - 425.0
+	draw_rect(Rect2(0, world_top, 960, 540.0 - world_top), Color("14233b"))
+	for i in ceili((540.0 - world_top) / 145.0):
+		var y := world_top + i * 145.0
 		draw_line(Vector2(0, y), Vector2(960, y), Color("23395a", 0.35), 1.0)
-	for i in 36:
+	for i in 180:
 		var x := float((i * 271 + 53) % 960)
-		var y := float((i * 197 + 31) % 1980) - 1480.0
+		var y := world_top + fposmod(float(i * 197 + 31), 540.0 - world_top)
 		draw_circle(Vector2(x, y), 1.5, Color("b2c7e5", 0.6))
 	for i in PLATFORMS.size():
 		var platform: Rect2 = PLATFORMS[i]
 		draw_rect(platform, Color("44637e"))
 		draw_rect(Rect2(platform.position, Vector2(platform.size.x, 5)), Color("87b8b1"))
 		if i == PLATFORMS.size() - 1:
-			draw_rect(Rect2(platform.position.x + 52, platform.position.y - 34, 25, 34), Color("ffd56d"))
+			draw_rect(Rect2(platform.get_center().x - 12.5, platform.position.y - 34, 25, 34), Color("ffd56d"))
