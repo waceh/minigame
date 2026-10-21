@@ -30,7 +30,7 @@ func _physics_process(delta: float) -> void:
 				charge_time = minf(charge_time + delta, JumpMath.MAX_CHARGE)
 			else:
 				velocity.y = -JumpMath.launch_speed(charge_time)
-				velocity.x = direction * JUMP_HORIZONTAL_SPEED
+				velocity.x = facing * JUMP_HORIZONTAL_SPEED
 				charging = false
 				charge_time = 0.0
 		else:

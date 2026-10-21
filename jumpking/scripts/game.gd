@@ -65,7 +65,7 @@ func make_hud() -> void:
 
 	message_label = Label.new()
 	message_label.position = Vector2(24, 54)
-	message_label.text = "화면 버튼으로 이동 · 점프를 누른 채 방향을 정하고 떼기 · 공중 조작 불가" if DisplayServer.is_touchscreen_available() else "A/D 이동 · 스페이스 충전 · 방향키 누른 채 떼어 점프 · 공중 조작 불가 · R 재시작"
+	message_label.text = "화면 버튼으로 방향 정하기 · 점프를 누른 뒤 떼면 보는 방향으로 점프" if DisplayServer.is_touchscreen_available() else "A/D 방향 정하기 · 스페이스 충전 후 떼면 보는 방향으로 점프 · R 재시작"
 	message_label.add_theme_font_size_override("font_size", 16)
 	message_label.add_theme_font_override("font", GameFont)
 	message_label.add_theme_color_override("font_color", Color("c5d4e8"))
@@ -107,7 +107,7 @@ func _physics_process(_delta: float) -> void:
 	height_label.text = "최고 높이  %d m" % best_height
 	if not won and player.is_on_floor() and player.position.y < PLATFORMS[-1].position.y - 5.0:
 		won = true
-		message_label.text = "정상 도착!  축하합니다. R을 눌러 다시 도전하세요."
+		message_label.text = "정상 도착! 다시 시작 버튼으로 재도전하세요." if DisplayServer.is_touchscreen_available() else "정상 도착! 축하합니다. R을 눌러 다시 도전하세요."
 		message_label.add_theme_color_override("font_color", Color("ffd56d"))
 
 func _unhandled_key_input(event: InputEvent) -> void:

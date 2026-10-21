@@ -45,6 +45,28 @@ func _run() -> void:
 		return
 
 	Input.action_release("move_left")
+	game.queue_free()
+	await physics_frame
+	game = load("res://main.tscn").instantiate()
+	root.add_child(game)
+	for i in 30:
+		await physics_frame
+	Input.action_press("move_left")
+	for i in 3:
+		await physics_frame
+	Input.action_release("move_left")
+	if game.player.facing != -1.0:
+		_fail("Walking left must set the facing direction")
+		return
+	Input.action_press("jump")
+	for i in 60:
+		await physics_frame
+	Input.action_release("jump")
+	for i in 3:
+		await physics_frame
+	if game.player.velocity.x >= -100.0:
+		_fail("Releasing jump without direction input must launch toward the facing direction")
+		return
 	print("king_controls_test: PASS")
 	quit()
 
