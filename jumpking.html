@@ -2,94 +2,60 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>하늘 발판 | 미니게임</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; min-height: 100vh; background: #101c30; color: #f7e8bb; font-family: Arial, sans-serif; }
-        main { max-width: 1040px; margin: 0 auto; padding: 24px; }
-        a { color: #a7d5cf; }
-        h1 { margin: 18px 0 8px; }
-        p { color: #c5d4e8; line-height: 1.5; }
-        iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 2px solid #537b88; border-radius: 10px; background: #14233b; }
-        .game-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
-        .game-shell { background: #101c30; }
-        .game-shell:fullscreen, .game-shell:-webkit-full-screen, .fullscreen-fallback .game-shell {
-            position: fixed; inset: 0; z-index: 1000; width: 100%; height: 100dvh;
-            display: flex; flex-direction: column; padding: 8px; overflow: hidden;
-        }
-        .game-shell:fullscreen iframe, .game-shell:-webkit-full-screen iframe, .fullscreen-fallback .game-shell iframe {
-            flex: 1; min-height: 0; height: 100%; aspect-ratio: auto; border-radius: 0;
-        }
-        .game-shell:fullscreen .game-tools, .game-shell:-webkit-full-screen .game-tools, .fullscreen-fallback .game-tools {
-            flex: none; margin: 0 0 8px;
-        }
-        .rotate-hint { display: none; }
-        @media (orientation: portrait) and (pointer: coarse) {
-            .game-shell:fullscreen .rotate-hint, .game-shell:-webkit-full-screen .rotate-hint,
-            .fullscreen-fallback .game-shell .rotate-hint {
-                display: block; position: absolute; z-index: 2; top: 62px; left: 12px; right: 12px;
-                padding: 10px; border-radius: 8px; background: rgba(16, 28, 48, 0.88);
-                color: #f7e8bb; text-align: center; pointer-events: none;
-            }
-        }
-        .fullscreen-fallback { overflow: hidden; }
-        button { min-height: 44px; padding: 8px 14px; border: 1px solid #a7d5cf; border-radius: 8px; background: #24445b; color: #f7e8bb; font-size: 1rem; }
-        .mobile-tip { display: none; }
-        @media (max-width: 700px), (pointer: coarse) {
-            main { padding: 12px; }
-            h1 { font-size: 1.5rem; }
-            .mobile-tip { display: block; }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#101c30">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="하늘 발판">
+    <title>하늘 발판</title>
+    <link rel="manifest" href="jumpking.webmanifest">
+    <link rel="apple-touch-icon" href="jumpking/web/index.apple-touch-icon.png">
+    <link rel="stylesheet" href="css/jumpking.css?v=1.3.0">
+    <script src="js/jumpking/mobile.js?v=1.3.0" defer></script>
 </head>
 <body>
-    <main>
-        <a href="index.html">← 미니게임 목록</a>
-        <h1>하늘 발판</h1>
-        <div class="game-shell" id="gameShell">
-            <div class="game-tools"><button type="button" id="fullscreenBtn">전체 화면</button><button type="button" id="restartBtn">다시 시작</button></div>
-            <iframe id="gameFrame" src="jumpking/web/index.html?v=1.1.24" title="하늘 발판 Godot 게임" allow="autoplay; fullscreen"></iframe>
-            <div class="rotate-hint">가로 화면으로 플레이하려면 휴대폰을 돌려 주세요.</div>
-        </div>
-        <p class="mobile-tip">휴대폰에서는 ◀ ▶ 버튼으로 방향을 정하고, ▲ 버튼을 누른 뒤 떼면 바라보는 방향으로 점프합니다. 전체 화면에서 가로 방향으로 바뀌지 않으면 휴대폰을 돌려 주세요.</p>
-        <p>높이 올라갈수록 좁아지는 발판을 딛고 정상까지 올라가세요. A/D 또는 ←/→로 방향을 정하고, 스페이스를 누른 뒤 떼면 바라보는 방향으로 점프합니다. 충전 중에는 걷지 못하고 공중에서도 방향을 바꿀 수 없습니다. 실패하면 아래로 떨어집니다.</p>
+    <main class="game-shell" id="gameShell">
+        <section class="play-area" aria-label="하늘 발판 게임">
+            <aside class="side-hud" aria-label="게임 정보와 메뉴">
+                <h1>하늘 발판</h1>
+                <span id="heightDisplay" aria-label="최고 높이">0 m</span>
+                <button type="button" id="menuBtn" aria-haspopup="dialog" aria-controls="gameMenu">Ⅱ 메뉴</button>
+                <button type="button" id="fullscreenBtn" aria-label="전체 화면">⛶ 화면</button>
+            </aside>
+            <div class="direction-pad touch-controls">
+                <div class="joystick" id="joystick" role="slider" tabindex="0" aria-label="좌우 이동 조이스틱" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0" aria-valuetext="가운데" aria-orientation="horizontal" aria-describedby="joystickHint">
+                    <span class="joystick-arrow left" aria-hidden="true">‹</span>
+                    <span class="joystick-arrow right" aria-hidden="true">›</span>
+                    <span class="joystick-knob" id="joystickKnob" aria-hidden="true"></span>
+                </div>
+                <span class="control-caption" id="joystickHint">좌우로 밀어 이동</span>
+            </div>
+            <div class="game-viewport">
+                <iframe id="gameFrame" src="jumpking/web/index.html?v=1.3.0" title="하늘 발판 게임" allow="autoplay; fullscreen" tabindex="0"></iframe>
+            </div>
+            <div class="jump-pad touch-controls">
+                <div class="charge-label" id="chargeLabel">눌러서 충전</div>
+                <div class="charge-track" role="progressbar" aria-label="점프 충전" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="chargeMeter"><div id="chargeFill"></div></div>
+                <button class="control-button jump-button" type="button" data-action="jump" aria-label="길게 누른 뒤 떼서 점프">▲<span>점프</span></button>
+                <span class="control-caption">떼면 점프!</span>
+            </div>
+        </section>
+        <dialog id="gameMenu" aria-labelledby="menuTitle" aria-describedby="menuDescription">
+            <div class="menu-card">
+                <span class="menu-eyebrow">SKY STEPS</span>
+                <h2 id="menuTitle">하늘 발판</h2>
+                <p id="menuDescription">발판을 딛고 정상까지 올라가세요.</p>
+                <p class="touch-instructions">왼손 조이스틱으로 방향을 정하고<br>오른손으로 점프를 꾹 눌렀다 떼세요.</p>
+                <p class="keyboard-instructions">A/D 또는 ← → 이동 · 스페이스 충전 후 점프</p>
+                <p class="menu-hint touch-instructions">가로 화면을 권장해요. 충전 중에도 방향을 바꿀 수 있어요.</p>
+                <button class="primary-button" id="resumeBtn" type="button" disabled>게임 불러오는 중…</button>
+                <button id="restartBtn" type="button" hidden>처음부터 다시 시작</button>
+                <button id="installBtn" type="button" hidden>홈 화면에 설치</button>
+                <p class="install-hint" id="installHint" hidden>Safari 공유 메뉴에서 ‘홈 화면에 추가’를 선택하세요.</p>
+                <a class="menu-exit" href="index.html">미니게임 목록으로</a>
+                <p class="load-status" id="loadStatus" role="status">게임을 준비하고 있습니다. 처음에는 잠시 걸릴 수 있어요.</p>
+            </div>
+        </dialog>
+        <div class="sr-only" role="status" id="gameAnnouncement"></div>
     </main>
-    <script>
-        const gameFrame = document.getElementById('gameFrame');
-        const gameShell = document.getElementById('gameShell');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        function updateFullscreenLayout() {
-            const expanded = document.fullscreenElement === gameShell || document.body.classList.contains('fullscreen-fallback');
-            fullscreenBtn.textContent = expanded ? '전체 화면 종료' : '전체 화면';
-            if (!expanded) screen.orientation?.unlock?.();
-        }
-        fullscreenBtn.addEventListener('click', async () => {
-            if (document.fullscreenElement) {
-                await document.exitFullscreen();
-            } else if (document.body.classList.contains('fullscreen-fallback')) {
-                document.body.classList.remove('fullscreen-fallback');
-            } else {
-                try {
-                    if (!gameShell.requestFullscreen) throw new Error('Fullscreen API unavailable');
-                    await gameShell.requestFullscreen();
-                    if (matchMedia('(pointer: coarse)').matches && screen.orientation?.lock) {
-                        screen.orientation.lock('landscape').catch(() => {});
-                    }
-                } catch {
-                    document.body.classList.add('fullscreen-fallback');
-                }
-            }
-            updateFullscreenLayout();
-        });
-        document.addEventListener('fullscreenchange', updateFullscreenLayout);
-        document.addEventListener('keydown', event => {
-            if (event.key === 'Escape' && document.body.classList.contains('fullscreen-fallback')) {
-                document.body.classList.remove('fullscreen-fallback');
-                updateFullscreenLayout();
-            }
-        });
-        document.getElementById('restartBtn').addEventListener('click', () => { gameFrame.src = gameFrame.src; });
-    </script>
 </body>
 </html>

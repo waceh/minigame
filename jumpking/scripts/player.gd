@@ -40,7 +40,7 @@ func _physics_process(delta: float) -> void:
 		if charging:
 			velocity.x = 0.0
 			if direction != 0.0:
-				facing = direction
+				facing = signf(direction)
 			if Input.is_action_pressed("jump"):
 				charge_time = minf(charge_time + delta, JumpMath.MAX_CHARGE)
 			else:
@@ -54,7 +54,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity.x = direction * WALK_SPEED
 			if direction != 0.0:
-				facing = direction
+				facing = signf(direction)
 	else:
 		velocity.y += GRAVITY * delta
 		charging = false
