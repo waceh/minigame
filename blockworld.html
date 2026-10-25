@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-    <a href="index.html" style="position:fixed;right:120px;top:27px;z-index:5;color:#fff1ca;font:13px system-ui;text-decoration:none">← 목록</a>
+    <a href="index.html" style="position:fixed;right:20px;top:72px;z-index:5;color:#fff1ca;font:13px system-ui;text-decoration:none">← 목록</a>
     <canvas id="canvas" tabindex="0" aria-label="블록 아일랜드 게임">브라우저가 게임 화면을 지원하지 않습니다.</canvas>
     <div id="loading" role="status"><span id="loadMessage">나만의 작은 섬을 만드는 중…</span><progress id="progress"></progress></div>
     <!-- Godot 4.5 runtime is shared with sky-steps; only this game's pack is new. -->
@@ -51,7 +51,7 @@
         }, true);
         window.addEventListener('pagehide', () => window.blockIslandSetCapture(false));
         const engine = new Engine({
-            executable: 'jumpking/web/index', mainPack: 'blockworld/web/index.pck?v=1.0.1',
+            executable: 'jumpking/web/index', mainPack: 'blockworld/web/index.pck?v=1.1.0',
             canvas: gameCanvas, canvasResizePolicy: 2, focusCanvas: true, args: [], gdextensionLibs: []
         });
         engine.startGame({onProgress(current, total) {

@@ -15,6 +15,8 @@ var menu_title: Label
 var start_button: Button
 var has_started = false
 var last_selected = -1
+var craft_buttons: Array = []
+var resources: Label
 
 func style(color: Color, border: Color = Color.TRANSPARENT) -> StyleBoxFlat:
 	var box = StyleBoxFlat.new()
@@ -72,7 +74,8 @@ func _ready():
 	var brand = label("BLOCK / ISLAND", 20, Color("fff4d7"))
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(brand)
-	header.add_child(button("Ⅱ 메뉴", world.pause_game))
+	header.add_child(button("장비", world.cycle_tool))
+	header.add_child(button("제작 / 메뉴", world.pause_game))
 	coords = label("", 13, Color("e9f1de"))
 	coords.position = Vector2(20, 64)
 	add_child(coords)
@@ -151,7 +154,7 @@ func make_overlay():
 	var subtitle = label("작은 섬, 마음대로 만드는 나만의 풍경", 15, Color("d6e4d4"))
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(subtitle)
-	var instructions = label("WASD 이동 · 마우스 이동으로 시점\nSpace 점프 · Shift 달리기\n좌클릭 채굴 · 우클릭 블록 쌓기\n1–7 / 휠 블록 선택 · Esc 메뉴\n모바일: 왼쪽 이동 · 오른쪽 시점 회전", 15, Color("d6e4d4"))
+	var instructions = label("WASD 이동 · 마우스 이동으로 시점\nSpace 점프 · Shift 달리기\n좌클릭 채굴 · 우클릭 블록 쌓기\n1–7 / 휠 블록 선택 · E 장비 교체\n좌클릭 꾹 채굴 · C 제작 · Esc 메뉴\n모바일: 왼쪽 이동 · 오른쪽 시점 회전", 15, Color("d6e4d4"))
 	instructions.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(instructions)
 	start_button = button("섬 탐험하기  →", func():
@@ -159,6 +162,14 @@ func make_overlay():
 		world.begin())
 	start_button.add_theme_stylebox_override("normal", style(Color("527d58"), Color("b2cf87")))
 	content.add_child(start_button)
+	resources = label("", 15, Color("fff2bd"))
+	resources.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(resources)
+	for i in range(1, 5):
+		var index = i
+		var craft = button("", func(): world.craft_tool(index))
+		content.add_child(craft)
+		craft_buttons.append(craft)
 	var row = HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	content.add_child(row)
@@ -167,7 +178,7 @@ func make_overlay():
 	row.add_child(button("터치 조작", func():
 		mobile = not mobile
 		refresh_overlay()))
-	var note = label("블록 무제한 · 변경한 월드는 이 기기에 자동 저장", 12, Color("acc7b8"))
+	var note = label("나무 채굴 → 목재 → 장비 제작 · 내구도 60\n나무 설치는 목재 1개 · 나머지 블록 무제한 · 자동 저장", 12, Color("acc7b8"))
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(note)
 
@@ -179,9 +190,15 @@ func refresh_overlay():
 	start_button.text = "계속 탐험하기  →" if has_started else "섬 탐험하기  →"
 
 func _process(_dt):
+	resources.text = "목재 %d개 · 장착: %s" % [world.wood, world.TOOL_NAMES[world.equipped]]
+	var uses = ["나무", "잎", "흙·모래", "돌·벽돌"]
+	for i in range(4):
+		var index = i + 1
+		craft_buttons[i].text = "%s · %s  |  %s" % [world.TOOL_NAMES[index], uses[i], ("장착 (%d/60)" % world.tools[index]) if world.tools[index] > 0 else ("제작: 목재 %d개" % world.TOOL_COSTS[index])]
+		craft_buttons[i].disabled = world.tools[index] == 0 and world.wood < world.TOOL_COSTS[index]
 	coords.text = "X %d   Y %d   Z %d   /   로컬 월드" % [world.player.position.x, world.player.position.y, world.player.position.z]
 	status.text = world.message if world.message_time > 0 else ""
-	hint.text = world.BLOCK_NAMES[world.selected] + "  ·  ∞" + ("   |   왼쪽 이동 · 오른쪽 시점" if mobile else "   |   좌클릭 채굴 · 우클릭 쌓기 · Esc 고정 해제")
+	hint.text = world.BLOCK_NAMES[world.selected] + (" · 목재 %d" % world.wood if world.selected == 4 else " · ∞") + "   |   " + world.TOOL_NAMES[world.equipped] + (" %d/60" % world.tools[world.equipped] if world.equipped > 0 else "") + ("   |   왼쪽 이동 · 오른쪽 시점" if mobile else "   |   좌클릭 채굴 · 우클릭 쌓기 · Esc 고정 해제")
 	if last_selected != world.selected:
 		last_selected = world.selected
 		for i in range(buttons.size()):

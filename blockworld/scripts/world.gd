@@ -8,6 +8,16 @@ const COLORS = [Color("79a94d"), Color("986d49"), Color("8b98a0"), Color("dfca8d
 const DIRS = [Vector3i.RIGHT, Vector3i.LEFT, Vector3i.UP, Vector3i.DOWN, Vector3i.BACK, Vector3i.FORWARD]
 const US = [Vector3.BACK, Vector3.FORWARD, Vector3.RIGHT, Vector3.RIGHT, Vector3.LEFT, Vector3.RIGHT]
 const VS = [Vector3.UP, Vector3.UP, Vector3.BACK, Vector3.FORWARD, Vector3.UP, Vector3.UP]
+const TOOL_NAMES = ["맨손", "나무 도끼", "나무 칼", "나무 삽", "나무 곡괭이"]
+const TOOL_COSTS = [0, 3, 2, 2, 3]
+const TOOL_DURABILITY = 60
+var wood = 0
+var tools = [0, 0, 0, 0, 0]
+var equipped = 0
+var mining_cell = Vector3i(999, 999, 999)
+var mining_hits = 0
+var held_tool: Node3D
+var swing_time = 0.0
 var save_path = SAVE_PATH
 var blocks: Dictionary = {}
 var edits: Dictionary = {}
@@ -41,6 +51,7 @@ func _ready():
 		for z in range(-2, 2): rebuild_chunk(Vector2i(x, z))
 	make_player()
 	make_outline()
+	make_held_tool()
 	var layer = CanvasLayer.new()
 	add_child(layer)
 	hud = load("res://scripts/hud.gd").new()
@@ -204,6 +215,89 @@ func make_player():
 	player.rotation.y = 0.35
 	camera.rotation.x = -0.16
 
+func craft_tool(index: int) -> bool:
+	if index < 1 or index >= TOOL_NAMES.size(): return false
+	if tools[index] > 0:
+		equipped = index
+		save_timer = 0.8
+		return true
+	if wood < TOOL_COSTS[index]:
+		show_message("목재가 부족해요. 나무 줄기를 먼저 캐세요")
+		return false
+	wood -= TOOL_COSTS[index]
+	tools[index] = TOOL_DURABILITY
+	equipped = index
+	save_timer = 0.8
+	show_message(TOOL_NAMES[index] + " 제작 완료!")
+	return true
+
+func cycle_tool():
+	for step in range(1, 6):
+		var index = (equipped + step) % 5
+		if index == 0 or tools[index] > 0:
+			equipped = index
+			save_timer = 0.8
+			return
+
+func required_hits(kind: int) -> int:
+	if (equipped == 1 and kind == 4) or (equipped == 2 and kind == 5) or (equipped == 3 and kind in [0, 1, 3]) or (equipped == 4 and kind in [2, 6]): return 1
+	return [3, 3, 6, 3, 4, 2, 6][kind]
+
+func mine_block(cell: Vector3i) -> bool:
+	if not blocks.has(cell) or cell.y <= 0: return false
+	if mining_cell != cell:
+		mining_cell = cell
+		mining_hits = 0
+	mining_hits += 1
+	swing_time = 0.2
+	var kind: int = blocks[cell]
+	var needed = required_hits(kind)
+	if mining_hits < needed:
+		show_message("%s 채굴 %d / %d" % [BLOCK_NAMES[kind], mining_hits, needed])
+		return false
+	mining_hits = 0
+	set_block(cell, -1)
+	breaking += 1
+	if kind == 4:
+		wood += 1
+		show_message("목재 +1 · 보유 %d · C 제작 메뉴" % wood)
+	if equipped > 0:
+		tools[equipped] -= 1
+		if tools[equipped] <= 0:
+			show_message(TOOL_NAMES[equipped] + "이 부서졌어요. 다시 제작하세요")
+			equipped = 0
+	return true
+
+func make_held_tool():
+	held_tool = Node3D.new()
+	camera.add_child(held_tool)
+	var timber = StandardMaterial3D.new()
+	timber.albedo_color = Color("b5864f")
+	for i in range(3):
+		var part = MeshInstance3D.new()
+		var box = BoxMesh.new()
+		box.size = Vector3(0.07, 0.48, 0.07) if i == 0 else Vector3(0.28, 0.12, 0.10)
+		part.mesh = box
+		part.material_override = timber
+		held_tool.add_child(part)
+
+func update_held_tool(dt):
+	swing_time = maxf(0, swing_time - dt)
+	held_tool.visible = active and equipped > 0
+	held_tool.position = Vector3(0.38, -0.32, -0.72)
+	held_tool.rotation = Vector3(-sin(swing_time / 0.2 * PI) * 0.8, 0, -0.35)
+	var head = held_tool.get_child(1)
+	head.position = Vector3(0.05, 0.23, 0)
+	head.scale = Vector3.ONE
+	if equipped == 2:
+		head.scale = Vector3(0.38, 3.4, 0.6)
+		head.position = Vector3(0, 0.36, 0)
+	elif equipped == 3: head.scale = Vector3(0.65, 1.8, 0.6)
+	elif equipped == 4: head.scale = Vector3(1.6, 0.6, 0.7)
+	held_tool.get_child(2).visible = equipped == 2
+	held_tool.get_child(2).position = Vector3(0, 0.1, 0)
+	held_tool.get_child(2).scale = Vector3(0.8, 0.4, 0.8)
+
 func make_outline():
 	outline = MeshInstance3D.new()
 	var mesh = ImmediateMesh.new()
@@ -228,6 +322,7 @@ func make_outline():
 
 func _process(dt):
 	if not is_instance_valid(player): return
+	update_held_tool(dt)
 	if active:
 		var query = PhysicsRayQueryParameters3D.create(camera.global_position, camera.global_position - camera.global_basis.z * 6.0)
 		query.exclude = [player.get_rid()]
@@ -236,6 +331,9 @@ func _process(dt):
 		if outline.visible:
 			outline.position = Vector3(hit_cell(false)) + Vector3.ONE * 0.5
 	else: outline.visible = false
+	if target.is_empty() or (not target.is_empty() and hit_cell(false) != mining_cell):
+		mining_hits = 0
+		mining_cell = Vector3i(999, 999, 999)
 	if save_timer >= 0:
 		save_timer -= dt
 		if save_timer < 0: save_world()
@@ -257,14 +355,18 @@ func edit_target(place: bool):
 		if not can_place(cell):
 			show_message("여기에는 블록을 놓을 수 없어요")
 			return
+		if selected == 4:
+			if wood <= 0:
+				show_message("나무를 놓으려면 목재가 필요해요")
+				return
+			wood -= 1
 		set_block(cell, selected)
 		placing += 1
 	else:
 		if cell.y <= 0:
 			show_message("섬의 바닥은 부술 수 없어요")
 			return
-		set_block(cell, -1)
-		breaking += 1
+		mine_block(cell)
 
 func set_block(cell: Vector3i, kind: int):
 	if kind < 0: blocks.erase(cell)
@@ -282,7 +384,7 @@ func show_message(text: String):
 func save_world():
 	var file = FileAccess.open(save_path, FileAccess.WRITE)
 	if file:
-		file.store_string(JSON.stringify({"version": 1, "edits": edits}))
+		file.store_string(JSON.stringify({"version": 2, "edits": edits, "wood": wood, "tools": tools, "equipped": equipped}))
 		show_message("월드 저장 완료")
 	else: show_message("저장하지 못했어요. 브라우저 저장 공간을 확인하세요")
 
@@ -290,6 +392,13 @@ func load_edits():
 	if not FileAccess.file_exists(save_path): return
 	var data = JSON.parse_string(FileAccess.get_file_as_string(save_path))
 	if not data is Dictionary or not data.get("edits") is Dictionary: return
+	wood = clampi(int(data.get("wood", 0)), 0, 999999)
+	var saved_tools = data.get("tools", [])
+	tools = [0, 0, 0, 0, 0]
+	if saved_tools is Array and saved_tools.size() == 5:
+		for i in range(1, 5): tools[i] = clampi(int(saved_tools[i]), 0, TOOL_DURABILITY)
+	equipped = clampi(int(data.get("equipped", 0)), 0, 4)
+	if tools[equipped] == 0: equipped = 0
 	for key in data.edits:
 		var parts = str(key).split(",")
 		if parts.size() != 3: continue

@@ -23,6 +23,8 @@ func _input(event):
 			return
 		if world.active:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_7: world.selected = event.keycode - KEY_1
+			if event.keycode == KEY_C: world.pause_game()
+			if event.keycode == KEY_E: world.cycle_tool()
 			if event.keycode == KEY_SPACE: jump_requested = true
 			if event.keycode == KEY_F: world.respawn()
 	if not world.active: return
@@ -39,7 +41,7 @@ func _unhandled_input(event):
 		if not world.mouse_captured(): return
 		if event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT:
 			world.edit_target(event.button_index == MOUSE_BUTTON_RIGHT)
-			action_timer = 0.18
+			action_timer = 0.25
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			var size = get_viewport().get_visible_rect().size
@@ -66,6 +68,9 @@ func look(delta: Vector2):
 func _physics_process(dt):
 	action_timer = maxf(0, action_timer - dt)
 	if not world.active: return
+	if world.mouse_captured() and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and action_timer <= 0:
+		world.edit_target(false)
+		action_timer = 0.25
 	var axis = Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)), float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)))
 	axis = (axis + touch_axis).limit_length()
 	var direction = global_basis * Vector3(axis.x, 0, axis.y)
