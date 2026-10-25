@@ -8,3 +8,10 @@ Thumbs.db
 
 # Godot editor cache
 jumpking/.godot/
+
+# Godot card duel editor cache
+cardduel/.godot/
+
+starfighter/.godot/
+
+blockworld/.godot/

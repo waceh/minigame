@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#09171f">
+    <title>카드 맞추기 · 친구와 1:1</title>
+    <script src="js/cardduel/config.js?v=0.1.1"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #09171f; color: #e8efe8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        main { height: 100vh; height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+        iframe { width: 100%; height: 100%; border: 0; display: block; }
+        dialog { max-width: min(440px, calc(100% - 32px)); padding: 24px; border: 1px solid #416761; border-radius: 20px; background: #153235; color: inherit; }
+        dialog::backdrop { background: #000b; }
+        h2 { margin-top: 0; color: #f4cf86; }
+        p { line-height: 1.6; }
+        input { width: 100%; padding: 12px; border: 1px solid #6f8f8b; border-radius: 8px; background: #0c242a; color: inherit; font-size: 16px; }
+        button { min-height: 44px; padding: 10px 18px; margin-top: 12px; border: 1px solid #8da99d; border-radius: 10px; background: #e9c57f; color: #183238; font-size: 16px; cursor: pointer; }
+        .secondary { background: transparent; color: #e8efe8; }
+        #shareStatus { min-height: 24px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <main><iframe id="cardFrame" src="cardduel/web/index.html?v=0.1.1" title="카드 맞추기 Godot 게임" allow="autoplay; fullscreen"></iframe></main>
+    <dialog id="inviteDialog" aria-labelledby="inviteTitle">
+        <h2 id="inviteTitle">친구 초대하기</h2>
+        <p>친구에게 링크를 보내 주세요. 닉네임을 입력하고 입장하면 함께 플레이할 수 있어요.</p>
+        <input id="inviteLink" aria-label="친구 초대 링크" readonly>
+        <button id="copyInvite" type="button">초대 링크 복사</button>
+        <button id="closeInvite" class="secondary" type="button">닫기</button>
+        <p id="shareStatus" role="status"></p>
+    </dialog>
+    <script>
+        const cardFrame = document.getElementById('cardFrame');
+        const inviteDialog = document.getElementById('inviteDialog');
+        const inviteLink = document.getElementById('inviteLink');
+        const shareStatus = document.getElementById('shareStatus');
+        window.addEventListener('message', event => {
+            if (event.source !== cardFrame.contentWindow || event.origin !== location.origin || event.data?.type !== 'cardduel-invite') return;
+            if (!/^[A-Z2-9]{8}$/.test(event.data.room)) return;
+            const url = new URL('cardduel.html', location.href);
+            url.searchParams.set('room', event.data.room);
+            inviteLink.value = url.href;
+            shareStatus.textContent = '';
+            if (!inviteDialog.open) inviteDialog.showModal();
+        });
+        document.getElementById('copyInvite').addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(inviteLink.value); shareStatus.textContent = '복사했어요. 친구에게 보내 주세요.'; }
+            catch { inviteLink.select(); shareStatus.textContent = '링크를 길게 눌러 복사해 주세요.'; }
+        });
+        document.getElementById('closeInvite').addEventListener('click', () => inviteDialog.close());
+    </script>
+</body>
+</html>

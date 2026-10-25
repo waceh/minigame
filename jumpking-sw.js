@@ -1,5 +1,5 @@
 // Bump VERSION together with the shell and web export when publishing a new build.
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 const CACHE = `jumpking-${VERSION}`;
 const root = new URL('./', self.location.href);
 const assets = [

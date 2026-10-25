@@ -73,7 +73,7 @@
 
 Godot 4.5 프로젝트 원본은 `jumpking/`에, 웹 빌드는 `jumpking/web/`에 있습니다. 게임을 수정한 뒤에는 Godot에서 프로젝트를 열고 **프로젝트 > 내보내기 > Web**으로 다시 빌드할 수 있습니다. 배포할 때는 다음 버전을 함께 올려 브라우저가 새 게임 파일을 받도록 합니다.
 - `jumpking.html`의 iframe·CSS·JS 쿼리 버전
-- `jumpking/web/index.html`의 `GODOT_CONFIG.mainPack` (`index.pck?v=1.3.0`; Godot 내보내기 후 다시 설정)
+- `jumpking/web/index.html`의 `GODOT_CONFIG.mainPack` (`index.pck?v=1.3.1`; Godot 내보내기 후 다시 설정)
 - `jumpking-sw.js`의 `VERSION`
 
 설치용 웹 매니페스트는 `jumpking.webmanifest`, 오프라인 캐시는 `jumpking-sw.js`에서 관리합니다. Godot 자체 PWA 내보내기는 끈 상태로 유지합니다. 업데이트는 진행 중인 게임을 중단하지 않고 게임 탭을 모두 닫은 뒤 다음 실행에 적용됩니다.
@@ -81,6 +81,38 @@ Godot 4.5 프로젝트 원본은 `jumpking/`에, 웹 빌드는 `jumpking/web/`�
 브라우저 UI와 Godot는 같은 출처의 `minigameCommand` 콜백 및 출처·프레임을 확인하는 상태 메시지로 연결됩니다. `jumpking/web/index.html`을 직접 열면 기존 Godot 터치 버튼을 사용합니다.
 
 **검증:** Godot 4.5에서 `godot --headless --path jumpking --script tests/mobile_controls_test.gd`로 충전 취소·일시정지·재개 후 점프를 검사할 수 있습니다. 다른 `jumpking/tests/*_test.gd`도 동일한 방법으로 실행합니다.
+
+### 5. 카드 맞추기 · 1:1 (Godot)
+친구와 방 코드 또는 초대 링크로 만나는 턴제 카드게임입니다. 각자 7장으로 시작해 무늬나 숫자를 맞추고 먼저 손패를 비우면 승리합니다. 재대전과 같은 탭에서의 재접속을 지원합니다.
+
+- 화면: `cardduel.html`, Godot 프로젝트: `cardduel/`
+- 서버: `server/` — Cloudflare Workers + SQLite Durable Objects
+- 로컬 실행: `npm ci --prefix server` → `npm run dev --prefix server`, 정적 서버도 켠 뒤 `http://localhost:8000/cardduel.html`에 접속합니다.
+- 인터넷 대전은 Cloudflare 계정 로그인과 서버 배포 후 사용할 수 있습니다. 설정·배포·테스트는 [서버 안내](server/README.md)를 참고하세요.
+
+### 6. 스타 편대 (Godot)
+갤러그 스타일의 세로 우주 슈팅게임입니다. 적 편대가 급강하하며 공격하고, 4웨이브마다 보스가 등장합니다. 생명 3개로 도전하며 최고 점수를 기기에 저장합니다.
+
+- 실행: `starfighter.html`, 원본: `starfighter/`
+- 이동: 방향키 또는 WASD, 모바일은 화면 드래그. 탄환은 자동 발사합니다.
+- P 아이템: 10초간 3방향 강화 사격. 일시정지: P / Esc 또는 오른쪽 위 버튼.
+- 시작·재도전: Enter / Space 또는 화면 터치.
+- 웹 빌드: Godot 4.5에서 `godot --headless --path starfighter --export-pack Web /절대경로/minigame/starfighter/web/index.pck`
+- 웹 셸은 `jumpking/web/`의 Godot 4.5 런타임을 공유합니다. `starfighter/web/index.html`은 수동 셸이므로 덮어쓰지 마세요.
+- 글꼴: Noto Sans KR, 라이선스 `starfighter/OFL.txt`.
+
+### 7. 블록 아일랜드 (Godot 3D)
+블록 지형과 나무가 있는 작은 섬을 탐험하는 1인칭 크리에이티브 샌드박스입니다. 7종 블록을 무제한으로 캐고 쌓을 수 있고, 변경한 블록은 이 브라우저/기기에 자동 저장됩니다. 멀티플레이·제작·몬스터는 없는 건축 중심 게임입니다.
+
+- 실행: `blockworld.html`, Godot 4.5 원본: `blockworld/`
+- PC: WASD/방향키 이동, 마우스 이동으로 시점 회전(시작 시 포인터 고정, Esc 해제), Space 점프, Shift 달리기.
+- 좌클릭 채굴, 우클릭 쌓기, 숫자 1–7 또는 휠로 블록 선택. 사거리 6블록.
+- Esc/Tab 메뉴, F 시작점 복귀. 메뉴에서 수동 저장도 가능합니다.
+- 모바일: 왼쪽 아래 드래그 이동, 오른쪽 드래그 시점, 채굴·쌓기·점프 버튼. 가로 화면 권장. 메뉴에서 터치 조작을 켤 수 있습니다.
+- 48×48 지형을 12×12 구역으로 나눠 노출된 면만 메시·충돌로 생성합니다. 건축 높이는 24, 바닥은 보호됩니다. 바다 아래로 떨어지면 시작점으로 돌아옵니다.
+- Godot 검증: `godot --headless --path blockworld --script tests/world_test.gd`
+- 웹 빌드: `godot --headless --path blockworld --export-pack Web /절대경로/minigame/blockworld/web/index.pck`
+- `jumpking/web/`의 Godot 4.5 런타임을 공유합니다. 수동 웹 셸은 덮어쓰지 마세요. 글꼴 라이선스: `blockworld/OFL.txt`.
 
 ## 🚀 실행 방법
 

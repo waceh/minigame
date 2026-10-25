@@ -9,18 +9,18 @@ a { color: #b7d9d3; text-decoration: none; }
 [hidden] { display: none !important; }
 .game-shell { height: 100vh; height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); display: flex; flex-direction: column; background: #101c30; }
 /* All HUD controls sit beside the game, leaving its full height visible. */
-.side-hud { position: absolute; z-index: 2; top: 12px; left: 8px; width: 104px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.side-hud { grid-column: 1; grid-row: 1; justify-self: center; width: 104px; padding: 12px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .side-hud h1 { margin: 0; font-size: 11px; letter-spacing: .1em; color: #a7c6c6; }
 #heightDisplay { font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; color: #f7d78c; }
 .side-hud button { min-height: 36px; padding: 6px 10px; width: 78px; border-radius: 10px; font-size: 12px; }
-.play-area { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: 120px minmax(0, 1fr) 104px; background: #14233b; }
-.game-viewport { min-width: 0; min-height: 0; grid-column: 2; grid-row: 1; }
+.play-area { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: 120px minmax(0, 1fr) 104px; grid-template-rows: auto minmax(0, 1fr); background: #14233b; }
+.game-viewport { min-width: 0; min-height: 0; grid-column: 2; grid-row: 1 / -1; }
 iframe { width: 100%; height: 100%; display: block; border: 0; background: #14233b; }
 .touch-controls, .touch-instructions, .rotate-hint { display: none; }
 .control-button { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; padding: 0; width: 62px; height: 68px; min-height: 0; border-radius: 20px; border: 2px solid #597e8b; background: #243f54; box-shadow: 0 5px 0 #0a1727; font-size: 25px; transition: background .1s, transform .1s; }
 .control-button.pressed { transform: translateY(4px); box-shadow: 0 1px 0 #0a1727; background: #496a72; border-color: #ffd56d; }
 .control-caption { font-size: 11px; color: #b2c7d2; text-align: center; }
-.direction-pad { grid-column: 1; grid-row: 1; align-self: end; justify-self: center; flex-direction: column; align-items: center; gap: 10px; padding: 12px 4px 18px; }
+.direction-pad { grid-column: 1; grid-row: 2; align-self: end; justify-self: center; flex-direction: column; align-items: center; gap: 10px; padding: 12px 4px 18px; }
 .joystick { position: relative; width: 108px; height: 108px; border-radius: 50%; border: 1px solid #537a88; background: radial-gradient(circle, #263f52 0%, #172d42 65%); box-shadow: inset 0 0 0 12px #1b3348, inset 0 2px 10px #071726; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab; }
 .joystick.active { border-color: #eacb83; cursor: grabbing; }
 .joystick-knob { position: absolute; left: 27px; top: 27px; width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle at 40% 30%, #60818c, #355465); border: 2px solid #8ca8ae; box-shadow: 0 4px 8px #071726a0; pointer-events: none; }
@@ -28,7 +28,7 @@ iframe { width: 100%; height: 100%; display: block; border: 0; background: #1423
 .joystick-arrow { position: absolute; top: 36px; color: #b0c9cb; font-size: 28px; line-height: 30px; pointer-events: none; }
 .joystick-arrow.left { left: 7px; }
 .joystick-arrow.right { right: 7px; }
-.jump-pad { grid-column: 3; grid-row: 1; align-self: end; justify-self: center; align-items: center; gap: 8px; padding: 12px 8px 18px; }
+.jump-pad { grid-column: 3; grid-row: 1 / -1; align-self: end; justify-self: center; align-items: center; gap: 8px; padding: 12px 8px 18px; }
 .jump-button { width: 82px; height: 82px; border-radius: 28px; border-color: #cfb774; color: #ffe5a3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .jump-button span { font-size: 12px; }
 .charge-label { color: #f7d78c; font-size: 11px; text-align: center; }
@@ -58,7 +58,15 @@ h2 { margin: 0; font-size: 30px; }
     .game-viewport { grid-column: 1 / -1; grid-row: 1; }
     .direction-pad { grid-column: 1; grid-row: 2; align-self: center; }
     .jump-pad { grid-column: 2; grid-row: 2; align-self: center; }
-    .side-hud { top: 12px; left: 8px; padding: 8px 4px; width: 88px; border-radius: 14px; background: #101c30d9; }
+    .side-hud { position: absolute; z-index: 2; top: 12px; left: 8px; padding: 8px 4px; width: 88px; border-radius: 14px; background: #101c30d9; }
+}
+@media (orientation: landscape) and (max-height: 340px) {
+    .side-hud { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 108px; gap: 4px; padding: 6px 0; text-align: center; }
+    .side-hud h1 { display: none; }
+    #heightDisplay { grid-column: 1 / -1; font-size: 18px; }
+    .side-hud button { width: 100%; min-height: 44px; padding: 6px 2px; font-size: 11px; }
+    .direction-pad { padding: 4px; }
+    .direction-pad .control-caption { display: none; }
 }
 @media (max-height: 450px) {
     .menu-card { padding: 16px 24px; gap: 9px; }
