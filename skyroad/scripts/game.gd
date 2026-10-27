@@ -39,8 +39,13 @@ var fuel_bar: ProgressBar
 var oxygen_bar: ProgressBar
 var speed_lines
 var engine_trails: Array[MeshInstance3D] = []
+var joystick
+var action_buttons: Dictionary = {}
+var action_touches: Dictionary = {}
+var mouse_actions: Dictionary = {}
 
 func _ready() -> void:
+	Input.emulate_mouse_from_touch = false
 	_configure_mobile_view()
 	get_window().size_changed.connect(_configure_mobile_view)
 	_create_world()
@@ -213,7 +218,7 @@ func _create_hud() -> void:
 	help_label.anchor_top = 0.42
 	help_label.anchor_bottom = 0.42
 	help_label.offset_bottom = 140
-	var joystick = JoystickScript.new()
+	joystick = JoystickScript.new()
 	joystick.anchor_top = 1.0
 	joystick.anchor_bottom = 1.0
 	joystick.offset_left = 20
@@ -240,25 +245,55 @@ func _create_hud() -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_font_size_override("font_size", 23)
 		buttons.add_child(button)
+		action_buttons[spec[1]] = button
 		button.button_down.connect(_touch_down.bind(spec[1]))
 		button.button_up.connect(_touch_up.bind(spec[1]))
 		button.mouse_exited.connect(_touch_up.bind(spec[1]))
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_set_action_touch(event.index, _action_at(event.position))
+		elif action_touches.has(event.index):
+			_set_action_touch(event.index, "")
+	elif event is InputEventScreenDrag and action_touches.has(event.index):
+		_set_action_touch(event.index, _action_at(event.position))
+
+func _action_at(position: Vector2) -> String:
+	for action in action_buttons:
+		var button: Button = action_buttons[action]
+		if button.get_global_rect().has_point(position):
+			return action
+	return ""
+
+func _set_action_touch(index: int, action: String) -> void:
+	if action.is_empty():
+		action_touches.erase(index)
+	else:
+		if mode != "playing":
+			if mode == "complete":
+				level = 0
+			_start()
+		action_touches[index] = action
+	_refresh_actions()
+
+func _refresh_actions() -> void:
+	var held: Array = action_touches.values()
+	touch_fast = mouse_actions.has("fast") or held.has("fast")
+	touch_brake = mouse_actions.has("brake") or held.has("brake")
+	touch_jump = mouse_actions.has("jump") or held.has("jump")
 
 func _touch_down(action: String) -> void:
 	if mode != "playing":
 		if mode == "complete":
 			level = 0
 		_start()
-	match action:
-		"fast": touch_fast = true
-		"brake": touch_brake = true
-		"jump": touch_jump = true
+	mouse_actions[action] = true
+	_refresh_actions()
 
 func _touch_up(action: String) -> void:
-	match action:
-		"fast": touch_fast = false
-		"brake": touch_brake = false
-		"jump": touch_jump = false
+	mouse_actions.erase(action)
+	_refresh_actions()
 
 func _start() -> void:
 	mode = "playing"
@@ -274,6 +309,9 @@ func _start() -> void:
 	last_pad = ""
 	message = ""
 	touch_steer = 0.0
+	action_touches.clear()
+	mouse_actions.clear()
+	_refresh_actions()
 	_build_course()
 	_update_display()
 
