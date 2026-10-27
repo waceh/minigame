@@ -1,0 +1,13 @@
+63f7b34db8d8cdea90c76aacccf841ec
+::res://::1793087596
+export_presets.cfg::TextFile::-1::1793087487::0::1::::<><><>0<>0<><>::
+font.ttf::FontFile::304671442632825208::1793087573::1793087596::1::::<><><>0<>0<>356c1b6cf6feb1b778f7ad49b019fdf1<>res://.godot/imported/font.ttf-7ba3e8c1ec355f88f1af089917a76c36.fontdata::
+main.tscn::PackedScene::-1::1793087431::0::1::::<><><>0<>0<><>::res://scripts/game.gd
+OFL.txt::TextFile::-1::1793087573::0::1::::<><><>0<>0<><>::
+::res://scripts/::1793087557
+game.gd::GDScript::8695049952713795618::1793087688::0::1::::<>Node3D<><>0<>0<><>::
+track.gd::GDScript::4499615198729366857::1793087383::0::1::::<>RefCounted<><>0<>0<><>::
+::res://tests/::1793087646
+game_test.gd::GDScript::5423788578959355951::1793087668::0::1::::<>SceneTree<><>0<>0<><>::
+track_test.gd::GDScript::8315001382023822307::1793087370::0::1::::<>SceneTree<><>0<>0<><>::
+::res://web/::1793087631
