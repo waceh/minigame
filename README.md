@@ -118,11 +118,11 @@ Godot 4.5 프로젝트 원본은 `jumpking/`에, 웹 빌드는 `jumpking/web/`�
 
 ### 8. 스카이로드 (Godot 3D)
 
-고전 우주 도로 게임에서 영감을 받은 3D 점프 러너입니다. 좌우로 조종하고 속도를 조절하며 틈과 장애물을 넘으세요. 연료와 산소를 채우는 타일을 밟고 세 코스를 완주하면 됩니다.
+고전 우주 도로 게임에서 영감을 받은 3D 점프 러너입니다. 좌우로 조종하고 속도를 조절하며 틈과 장애물을 넘으세요. 빛나는 발사 타일을 밟으면 초고속으로 높이 솟아 긴 공백을 건넌 뒤 착지합니다. 연료와 산소를 채우는 타일을 밟고 세 코스를 완주하면 됩니다.
 
 - 실행: `skyroad.html`, Godot 4.5 원본: `skyroad/`
 - PC: 좌우 방향키/A·D 이동, 위아래 방향키/W·S 가속·감속, Space 점프, R 다시 시작, Esc 일시정지.
-- 모바일: 화면 아래 이동·가속·감속·점프 버튼.
+- 모바일: 왼쪽 가상 조이스틱을 기울여 이동, 오른쪽 가속·감속·점프 버튼.
 - 테스트: `godot --headless --path skyroad --script tests/track_test.gd`
 - 웹 빌드: `godot --headless --path skyroad --export-pack Web /절대경로/minigame/skyroad/web/index.pck`
 - 웹 런타임은 `jumpking/web/`의 Godot 4.5 파일을 공유합니다. 한글 글꼴 라이선스는 `skyroad/OFL.txt`에 있습니다.

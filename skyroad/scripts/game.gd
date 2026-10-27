@@ -2,6 +2,8 @@ extends Node3D
 
 const Track = preload("res://scripts/track.gd")
 const FONT = preload("res://font.ttf")
+const SpeedLinesScript = preload("res://scripts/speed_lines.gd")
+const JoystickScript = preload("res://scripts/joystick.gd")
 const TILE_SIZE := 4.0
 const SHIP_HEIGHT := 0.55
 const LANE_X := [-8.0, -4.0, 0.0, 4.0, 8.0]
@@ -14,13 +16,13 @@ var player_z := -5.0
 var player_y := SHIP_HEIGHT
 var vertical_speed := 0.0
 var speed := 16.0
+var boost_time := 0.0
 var fuel := 100.0
 var oxygen := 100.0
 var elapsed := 0.0
 var last_pad := ""
 var message := ""
-var touch_left := false
-var touch_right := false
+var touch_steer := 0.0
 var touch_fast := false
 var touch_brake := false
 var touch_jump := false
@@ -35,13 +37,22 @@ var help_label: Label
 var title_label: Label
 var fuel_bar: ProgressBar
 var oxygen_bar: ProgressBar
+var speed_lines
+var engine_trails: Array[MeshInstance3D] = []
 
 func _ready() -> void:
+	_configure_mobile_view()
+	get_window().size_changed.connect(_configure_mobile_view)
 	_create_world()
 	_create_ship()
 	_create_hud()
 	_build_course()
 	_update_display()
+
+func _configure_mobile_view() -> void:
+	if DisplayServer.is_touchscreen_available():
+		var portrait := get_window().size.x < get_window().size.y
+		get_window().content_scale_size = Vector2i(720, 1280) if portrait else Vector2i(1280, 720)
 
 func _create_world() -> void:
 	course_root = Node3D.new()
@@ -105,6 +116,9 @@ func _create_ship() -> void:
 	_box(ship, Vector3(2.5, 0.12, 0.65), Vector3(0, -0.08, 0.4), Color("fb646d"))
 	for side in [-1, 1]:
 		_box(ship, Vector3(0.38, 0.18, 0.38), Vector3(side * 0.55, -0.23, 1.08), Color("ffb650"), true)
+		var trail := _box(ship, Vector3(0.17, 0.12, 4.0), Vector3(side * 0.55, -0.23, 3.15), Color("76eaff"), true)
+		trail.visible = false
+		engine_trails.append(trail)
 	ship.position = Vector3(player_x, player_y, player_z)
 
 func _build_course() -> void:
@@ -131,6 +145,12 @@ func _build_course() -> void:
 				_box(course_root, Vector3(1.2, 1.25, 1.25), Vector3(x, 0.62, z), Color("ff4f69"), true)
 			elif kind in [Track.Tile.FUEL, Track.Tile.OXYGEN, Track.Tile.BOOST]:
 				_box(course_root, Vector3(2.4, 0.07, 2.4), Vector3(x, 0.025, z), Color("d6faff"), true)
+				if kind == Track.Tile.BOOST:
+					_box(course_root, Vector3(3.5, 0.12, 0.38), Vector3(x, 0.12, z + 1.0), Color("fff7ad"), true)
+					_box(course_root, Vector3(3.5, 0.12, 0.38), Vector3(x, 0.12, z - 1.0), Color("fff7ad"), true)
+	for row in range(Track.LAUNCH_ROWS[level] + 2, Track.SKY_GAP_ENDS[level] + 1, 3):
+		for side in [-1, 1]:
+			_box(course_root, Vector3(0.2, 2.2, 0.2), Vector3(side * 10.1, 0.3, -(float(row) + 0.5) * TILE_SIZE), Color("7feaff"), true)
 	for lane in range(5):
 		_box(course_root, Vector3(3.8, 0.1, 0.45), Vector3(LANE_X[lane], 0.05, -track.length(level) * TILE_SIZE + 1), Color("ffe281"), true)
 	var finish_z := -track.length(level) * TILE_SIZE + 2.0
@@ -156,6 +176,10 @@ func _create_hud() -> void:
 	theme.default_font = FONT
 	ui.theme = theme
 	hud.add_child(ui)
+	speed_lines = SpeedLinesScript.new()
+	speed_lines.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	speed_lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(speed_lines)
 	var top := HBoxContainer.new()
 	top.position = Vector2(24, 20)
 	top.size = Vector2(1230, 46)
@@ -177,24 +201,42 @@ func _create_hud() -> void:
 	meter_panel.add_child(oxygen_bar)
 	title_label = _label(ui, "", 44, Color("ffffff"))
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.position = Vector2(100, 220)
-	title_label.size = Vector2(1080, 70)
+	title_label.anchor_left = 0.03
+	title_label.anchor_right = 0.97
+	title_label.anchor_top = 0.32
+	title_label.anchor_bottom = 0.32
+	title_label.offset_bottom = 70
 	help_label = _label(ui, "", 23, Color("d5e7ff"))
 	help_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	help_label.position = Vector2(100, 302)
-	help_label.size = Vector2(1080, 140)
+	help_label.anchor_left = 0.03
+	help_label.anchor_right = 0.97
+	help_label.anchor_top = 0.42
+	help_label.anchor_bottom = 0.42
+	help_label.offset_bottom = 140
+	var joystick = JoystickScript.new()
+	joystick.anchor_top = 1.0
+	joystick.anchor_bottom = 1.0
+	joystick.offset_left = 20
+	joystick.offset_right = 210
+	joystick.offset_top = -200
+	joystick.offset_bottom = -10
+	joystick.changed.connect(func(value: float): touch_steer = value)
+	ui.add_child(joystick)
 	var buttons := HBoxContainer.new()
-	buttons.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	buttons.offset_left = 20
+	buttons.anchor_left = 0.46
+	buttons.anchor_right = 1.0
+	buttons.anchor_top = 1.0
+	buttons.anchor_bottom = 1.0
+	buttons.offset_left = 0
 	buttons.offset_right = -20
-	buttons.offset_top = -92
-	buttons.offset_bottom = -18
+	buttons.offset_top = -145
+	buttons.offset_bottom = -30
 	buttons.add_theme_constant_override("separation", 14)
 	ui.add_child(buttons)
-	for spec in [["◀", "left"], ["▶", "right"], ["감속", "brake"], ["가속", "fast"], ["점프", "jump"]]:
+	for spec in [["감속", "brake"], ["가속", "fast"], ["점프", "jump"]]:
 		var button := Button.new()
 		button.text = spec[0]
-		button.custom_minimum_size = Vector2(120, 70)
+		button.custom_minimum_size = Vector2(100, 110)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_font_size_override("font_size", 23)
 		buttons.add_child(button)
@@ -208,16 +250,12 @@ func _touch_down(action: String) -> void:
 			level = 0
 		_start()
 	match action:
-		"left": touch_left = true
-		"right": touch_right = true
 		"fast": touch_fast = true
 		"brake": touch_brake = true
 		"jump": touch_jump = true
 
 func _touch_up(action: String) -> void:
 	match action:
-		"left": touch_left = false
-		"right": touch_right = false
 		"fast": touch_fast = false
 		"brake": touch_brake = false
 		"jump": touch_jump = false
@@ -229,11 +267,13 @@ func _start() -> void:
 	player_y = SHIP_HEIGHT
 	vertical_speed = 0
 	speed = 16
+	boost_time = 0
 	fuel = 100
 	oxygen = 100
 	elapsed = 0
 	last_pad = ""
 	message = ""
+	touch_steer = 0.0
 	_build_course()
 	_update_display()
 
@@ -261,11 +301,13 @@ func _physics_process(delta: float) -> void:
 		return
 	var dt := minf(delta, 0.05)
 	elapsed += dt
-	var steer := float(Input.is_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_D) or touch_right) - float(Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_A) or touch_left)
+	boost_time = maxf(0.0, boost_time - dt)
+	var key_steer := float(Input.is_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_A))
+	var steer := clampf(key_steer + touch_steer, -1.0, 1.0)
 	player_x = clampf(player_x + steer * 9.5 * dt, -10.8, 10.8)
 	var accelerating := Input.is_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_W) or touch_fast
 	var braking := Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_S) or touch_brake
-	var target_speed := 22.0 if accelerating else (9.0 if braking else 16.0)
+	var target_speed := 36.0 if boost_time > 0.0 else (22.0 if accelerating else (9.0 if braking else 16.0))
 	speed = move_toward(speed, target_speed, 18.0 * dt)
 	var lane := clampi(int(round(player_x / TILE_SIZE)) + 2, 0, 4)
 	var row := int(floor(-player_z / TILE_SIZE))
@@ -298,7 +340,11 @@ func _physics_process(delta: float) -> void:
 			match tile:
 				Track.Tile.FUEL: fuel = minf(100, fuel + 38)
 				Track.Tile.OXYGEN: oxygen = minf(100, oxygen + 38)
-				Track.Tile.BOOST: speed = 26
+				Track.Tile.BOOST:
+					boost_time = 2.7
+					speed = 36.0
+					vertical_speed = 22.0
+					player_y = maxf(player_y, SHIP_HEIGHT + 0.04)
 	fuel = maxf(0, fuel - dt * (4.1 + maxf(0, speed - 16) * 0.13))
 	oxygen = maxf(0, oxygen - dt * 3.8)
 	if fuel <= 0:
@@ -315,12 +361,18 @@ func _physics_process(delta: float) -> void:
 			message = "코스 통과! 다음 코스로 이동합니다"
 	ship.position = Vector3(player_x, player_y, player_z)
 	ship.rotation.z = lerpf(ship.rotation.z, -steer * 0.16, dt * 8)
+	for trail in engine_trails:
+		trail.visible = boost_time > 0.0
+	speed_lines.intensity = clampf((speed - 21.0) / 15.0, 0.0, 1.0)
+	speed_lines.motion += dt * speed * 4.0
+	speed_lines.queue_redraw()
 	_update_camera(dt)
 	_update_display()
 
 func _update_camera(dt: float) -> void:
-	var desired := Vector3(player_x * 0.45, maxf(5.0, player_y + 4.3), player_z + 12.0)
+	var desired := Vector3(player_x * 0.45, maxf(5.0, player_y + (5.0 if boost_time > 0.0 else 4.3)), player_z + (15.0 if boost_time > 0.0 else 12.0))
 	camera.position = camera.position.lerp(desired, minf(1.0, dt * 5))
+	camera.fov = lerpf(camera.fov, 96.0 if boost_time > 0.0 else 72.0, minf(1.0, dt * 3.5))
 	camera.look_at(Vector3(player_x * 0.45, 0, player_z - 17), Vector3.UP)
 	for star in stars:
 		if star.global_position.z > camera.position.z + 35:
@@ -340,7 +392,7 @@ func _update_display() -> void:
 			title_label.text = "SKYROAD"
 			help_label.text = "우주 도로를 달려 결승점까지!\n← → 이동 · ↑ ↓ 속도 · SPACE 점프\nENTER 또는 화면 버튼으로 시작"
 		"playing":
-			title_label.text = ""
+			title_label.text = "HYPER JUMP" if boost_time > 0.0 and player_y < 3.0 else ""
 			help_label.text = ""
 		"paused":
 			title_label.text = "일시정지"

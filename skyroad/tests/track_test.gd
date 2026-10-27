@@ -13,5 +13,11 @@ func _initialize() -> void:
 	assert(track.tile_at(0, 23, 2) == Track.Tile.FUEL)
 	assert(track.tile_at(1, 19, 2) == Track.Tile.OXYGEN)
 	assert(track.tile_at(2, 31, 2) == Track.Tile.HAZARD)
+	for level in range(track.level_count()):
+		var launch_row: int = Track.LAUNCH_ROWS[level]
+		for lane in range(5):
+			assert(track.tile_at(level, launch_row, lane) == Track.Tile.BOOST)
+			assert(track.tile_at(level, launch_row + 3, lane) == Track.Tile.GAP)
+			assert(track.tile_at(level, Track.LANDING_ROWS[level], lane) == Track.Tile.ROAD)
 	print("track_test: PASS")
 	quit()
