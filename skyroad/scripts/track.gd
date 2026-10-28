@@ -2,12 +2,13 @@ extends RefCounted
 
 enum Tile { GAP, ROAD, FUEL, OXYGEN, HAZARD, BOOST }
 
-const LENGTHS = [64, 72, 80]
+const LENGTHS = [384, 432, 480]
 const NAMES = ["성운 산책로", "유성 지대", "푸른 성단"]
 const GRAVITY = [18.0, 21.0, 24.0]
 const LAUNCH_ROWS = [24, 38, 40]
-const LANDING_ROWS = [44, 54, 56]
-const SKY_GAP_ENDS = [42, 53, 55]
+const LANDING_ROWS = [92, 96, 90]
+const OLD_LANDING_ROWS = [44, 54, 56]
+const SKY_GAP_ENDS = [91, 95, 89]
 
 func level_count() -> int:
 	return LENGTHS.size()
@@ -26,6 +27,11 @@ func tile_at(level: int, row: int, lane: int) -> int:
 		return Tile.GAP
 	if row >= LANDING_ROWS[level] and row <= LANDING_ROWS[level] + 5:
 		return Tile.ROAD
+	var challenge_start: int = LANDING_ROWS[level] + 32
+	if row >= challenge_start and row < length(level) - 8:
+		return _challenge_tile(level, row - challenge_start, lane)
+	if row > LANDING_ROWS[level] + 5:
+		row -= LANDING_ROWS[level] - OLD_LANDING_ROWS[level]
 	if level == 0:
 		if row in [11, 12] and lane in [2, 3]:
 			return Tile.GAP
@@ -58,5 +64,28 @@ func tile_at(level: int, row: int, lane: int) -> int:
 		if row in [29, 63] and lane == 2:
 			return Tile.OXYGEN
 		if row in [31, 71] and lane == 2:
+			return Tile.HAZARD
+	return Tile.ROAD
+
+func _challenge_tile(level: int, offset: int, lane: int) -> int:
+	var section := int(offset / 24)
+	var section_row := offset % 24
+	var span: int = length(level) - 8 - LANDING_ROWS[level] - 32
+	var difficulty := mini(2, int(offset * 3 / span))
+	if section_row == 20:
+		return Tile.FUEL if section % 2 == 0 else Tile.OXYGEN
+	if section_row >= 5 and section_row <= 6 + int(difficulty > 0):
+		if difficulty == 2:
+			return Tile.GAP
+		if difficulty == 1 and lane != section % 5 and lane != (section + 1) % 5:
+			return Tile.GAP
+		if difficulty == 0 and lane in [(section + 1) % 5, (section + 3) % 5]:
+			return Tile.GAP
+	if section_row == 14 or (difficulty > 0 and section_row == 15):
+		if difficulty == 0 and lane == (section + 2) % 5:
+			return Tile.HAZARD
+		if difficulty == 1 and lane in [(section + 1) % 5, (section + 3) % 5]:
+			return Tile.HAZARD
+		if difficulty == 2 and lane != section % 5 and lane != (section + 1) % 5:
 			return Tile.HAZARD
 	return Tile.ROAD

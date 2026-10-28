@@ -6,6 +6,9 @@ const SpeedLinesScript = preload("res://scripts/speed_lines.gd")
 const JoystickScript = preload("res://scripts/joystick.gd")
 const TILE_SIZE := 4.0
 const SHIP_HEIGHT := 0.55
+const JUMP_HEIGHT_MULTIPLIER := sqrt(3.0)
+const FAST_SPEED := 40.0
+const MAX_ACCEL_SPEED := 60.0
 const LANE_X := [-8.0, -4.0, 0.0, 4.0, 8.0]
 
 var track = Track.new()
@@ -113,6 +116,20 @@ func _box(parent: Node3D, size: Vector3, position: Vector3, color: Color, glow :
 	parent.add_child(node)
 	return node
 
+func _road_batch(transforms: Array[Transform3D], color: Color) -> void:
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(3.85, 0.42, 3.85)
+	var batch := MultiMesh.new()
+	batch.transform_format = MultiMesh.TRANSFORM_3D
+	batch.mesh = mesh
+	batch.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		batch.set_instance_transform(index, transforms[index])
+	var node := MultiMeshInstance3D.new()
+	node.multimesh = batch
+	node.material_override = _material(color)
+	course_root.add_child(node)
+
 func _create_ship() -> void:
 	ship = Node3D.new()
 	add_child(ship)
@@ -129,6 +146,8 @@ func _create_ship() -> void:
 func _build_course() -> void:
 	for child in course_root.get_children():
 		child.queue_free()
+	var light_roads: Array[Transform3D] = []
+	var dark_roads: Array[Transform3D] = []
 	for row in range(track.length(level)):
 		for lane in range(5):
 			var kind: int = track.tile_at(level, row, lane)
@@ -136,6 +155,13 @@ func _build_course() -> void:
 				continue
 			var x: float = LANE_X[lane]
 			var z := -(float(row) + 0.5) * TILE_SIZE
+			if kind == Track.Tile.ROAD:
+				var road_transform := Transform3D(Basis.IDENTITY, Vector3(x, -0.24, z))
+				if (row + lane) % 2 == 0:
+					light_roads.append(road_transform)
+				else:
+					dark_roads.append(road_transform)
+				continue
 			var shade := Color("364e90") if (row + lane) % 2 == 0 else Color("2d437e")
 			if kind == Track.Tile.FUEL:
 				shade = Color("37bfff")
@@ -153,6 +179,8 @@ func _build_course() -> void:
 				if kind == Track.Tile.BOOST:
 					_box(course_root, Vector3(3.5, 0.12, 0.38), Vector3(x, 0.12, z + 1.0), Color("fff7ad"), true)
 					_box(course_root, Vector3(3.5, 0.12, 0.38), Vector3(x, 0.12, z - 1.0), Color("fff7ad"), true)
+	_road_batch(light_roads, Color("364e90"))
+	_road_batch(dark_roads, Color("2d437e"))
 	for row in range(Track.LAUNCH_ROWS[level] + 2, Track.SKY_GAP_ENDS[level] + 1, 3):
 		for side in [-1, 1]:
 			_box(course_root, Vector3(0.2, 2.2, 0.2), Vector3(side * 10.1, 0.3, -(float(row) + 0.5) * TILE_SIZE), Color("7feaff"), true)
@@ -345,8 +373,14 @@ func _physics_process(delta: float) -> void:
 	player_x = clampf(player_x + steer * 9.5 * dt, -10.8, 10.8)
 	var accelerating := Input.is_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_W) or touch_fast
 	var braking := Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_S) or touch_brake
-	var target_speed := 36.0 if boost_time > 0.0 else (22.0 if accelerating else (9.0 if braking else 16.0))
-	speed = move_toward(speed, target_speed, 18.0 * dt)
+	var target_speed := 66.0 if boost_time > 0.0 else (MAX_ACCEL_SPEED if accelerating else (9.0 if braking else 16.0))
+	var speed_change := 18.0
+	if accelerating and boost_time <= 0.0:
+		if speed < FAST_SPEED:
+			target_speed = FAST_SPEED
+		elif speed <= MAX_ACCEL_SPEED:
+			speed_change = 5.0
+	speed = move_toward(speed, target_speed, speed_change * dt)
 	var lane := clampi(int(round(player_x / TILE_SIZE)) + 2, 0, 4)
 	var row := int(floor(-player_z / TILE_SIZE))
 	var tile: int = track.tile_at(level, row, lane)
@@ -376,14 +410,14 @@ func _physics_process(delta: float) -> void:
 		if last_pad != pad_key:
 			last_pad = pad_key
 			match tile:
-				Track.Tile.FUEL: fuel = minf(100, fuel + 38)
+				Track.Tile.FUEL: fuel = minf(100, fuel + 60)
 				Track.Tile.OXYGEN: oxygen = minf(100, oxygen + 38)
 				Track.Tile.BOOST:
-					boost_time = 2.7
-					speed = 36.0
-					vertical_speed = 22.0
+					boost_time = 4.5
+					speed = 66.0
+					vertical_speed = 22.0 * JUMP_HEIGHT_MULTIPLIER
 					player_y = maxf(player_y, SHIP_HEIGHT + 0.04)
-	fuel = maxf(0, fuel - dt * (4.1 + maxf(0, speed - 16) * 0.13))
+	fuel = maxf(0, fuel - dt * (3.0 + maxf(0, speed - 16) * 0.08))
 	oxygen = maxf(0, oxygen - dt * 3.8)
 	if fuel <= 0:
 		_fail("연료가 떨어졌습니다")
@@ -401,7 +435,7 @@ func _physics_process(delta: float) -> void:
 	ship.rotation.z = lerpf(ship.rotation.z, -steer * 0.16, dt * 8)
 	for trail in engine_trails:
 		trail.visible = boost_time > 0.0
-	speed_lines.intensity = clampf((speed - 21.0) / 15.0, 0.0, 1.0)
+	speed_lines.intensity = clampf((speed - 21.0) / 45.0, 0.0, 1.0)
 	speed_lines.motion += dt * speed * 4.0
 	speed_lines.queue_redraw()
 	_update_camera(dt)
