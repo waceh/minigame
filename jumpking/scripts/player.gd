@@ -108,6 +108,13 @@ func update_particles(delta: float) -> void:
 		particle["velocity"] = Vector2(particle["velocity"]) + Vector2(0.0, 220.0) * delta
 		particles[i] = particle
 
+func _expression_state() -> String:
+	if landing_squash > 0.1 or velocity.y > 60.0:
+		return "falling"
+	if charging or velocity.y < -60.0:
+		return "jumping"
+	return "neutral"
+
 func _draw() -> void:
 	for particle: Dictionary in particles:
 		var particle_color: Color = particle["color"]
@@ -124,9 +131,54 @@ func _draw() -> void:
 		draw_circle(Vector2(0, 8), 24.0 + (1.0 - launch_flash) * 10.0, Color(1.0, 0.86, 0.52, launch_flash * 0.22))
 	if impact_ring > 0.0:
 		draw_arc(Vector2(0, 14), 18.0 + (1.0 - impact_ring) * 28.0, 0.0, TAU, 32, Color(0.65, 0.9, 0.9, impact_ring * 0.7), 2.0)
-	var body_color := Color("f7c76a") if is_on_floor() else Color("ffdd8e")
-	var half_width := 12.0 + landing_squash * 4.0
-	var top := -15.0 + compression + landing_squash * 7.0 - launch_flash * 5.0
-	draw_rect(Rect2(-half_width, top, half_width * 2.0, 15.0 - top), body_color)
-	draw_rect(Rect2(-half_width, 8, half_width * 2.0, 7), Color("dc7b58"))
-	draw_circle(Vector2(facing * 5.0, -5 + compression + landing_squash * 3.0), 2.0, Color("29314b"))
+	var head_y := -4.0 + compression + landing_squash * 3.0 - launch_flash * 5.0
+	var fur := Color("d99052")
+	var cream := Color("fff0d6")
+	var outline := Color("70452e")
+	var eyes := Color("211c1b")
+	var face_x := facing * 2.0
+	var expression := _expression_state()
+	var tail_x := -facing * 14.0
+	draw_circle(Vector2(tail_x, head_y + 7), 7.0, outline)
+	draw_circle(Vector2(tail_x, head_y + 6), 5.5, fur)
+	draw_circle(Vector2(tail_x - facing * 1.5, head_y + 4), 2.5, cream)
+	draw_circle(Vector2(0, head_y + 8), 12.5, outline)
+	draw_circle(Vector2(0, head_y + 7), 11.5, fur)
+	draw_circle(Vector2(0, head_y + 9), 7.0, cream)
+	for side in [-1.0, 1.0]:
+		var ear := PackedVector2Array([Vector2(side * 5, head_y - 10), Vector2(side * 10, head_y - 22), Vector2(side * 13, head_y - 8)])
+		draw_colored_polygon(ear, outline)
+		var inner_ear := PackedVector2Array([Vector2(side * 7, head_y - 11), Vector2(side * 10, head_y - 18), Vector2(side * 11, head_y - 10)])
+		draw_colored_polygon(inner_ear, Color("f1b59c"))
+	draw_circle(Vector2(0, head_y - 2), 12.5, outline)
+	draw_circle(Vector2(0, head_y - 2), 11.5, fur)
+	draw_circle(Vector2(face_x - facing * 4, head_y + 2), 5.5, cream)
+	draw_circle(Vector2(face_x + facing * 4, head_y + 3), 6.5, cream)
+	draw_circle(Vector2(face_x + facing * 2, head_y + 5), 5.0, cream)
+	var near_eye := Vector2(facing * 5, head_y - 5)
+	var far_eye := Vector2(-facing * 5, head_y - 5)
+	var mouth := Vector2(face_x + facing * 3, head_y + 6)
+	if expression == "jumping":
+		draw_arc(near_eye + Vector2(0, 1), 2.3, PI, TAU, 8, eyes, 1.5)
+		draw_arc(far_eye + Vector2(0, 1), 2.3, PI, TAU, 8, eyes, 1.5)
+		draw_circle(Vector2(face_x - facing * 6, head_y + 3), 1.4, Color("f2a5a0"))
+		draw_circle(mouth, 2.7, eyes)
+		draw_circle(mouth + Vector2(0, 1), 1.1, Color("f19c9c"))
+	elif expression == "falling":
+		for eye in [near_eye, far_eye]:
+			draw_line(eye + Vector2(-2, -1), eye + Vector2(2, 1), eyes, 1.7)
+			draw_line(eye + Vector2(-2, 1), eye + Vector2(2, -1), eyes, 1.7)
+		draw_line(mouth + Vector2(-3, 0), mouth + Vector2(-1, -1), eyes, 1.5)
+		draw_line(mouth + Vector2(-1, -1), mouth + Vector2(1, 1), eyes, 1.5)
+		draw_line(mouth + Vector2(1, 1), mouth + Vector2(3, 0), eyes, 1.5)
+	else:
+		draw_circle(near_eye, 2.0, eyes)
+		draw_circle(far_eye, 2.0, eyes)
+		draw_circle(near_eye + Vector2(facing * 0.5, -0.7), 0.7, Color.WHITE)
+		draw_circle(far_eye + Vector2(facing * 0.5, -0.7), 0.7, Color.WHITE)
+		draw_line(mouth + Vector2(-2, 0), mouth, eyes, 1.0)
+		draw_line(mouth, mouth + Vector2(2, 0), eyes, 1.0)
+	draw_circle(Vector2(face_x + facing * 6, head_y + 2), 1.8, eyes)
+	for side in [-1.0, 1.0]:
+		draw_circle(Vector2(side * 6, 12 + compression * 0.3), 4.0, outline)
+		draw_circle(Vector2(side * 6, 11 + compression * 0.3), 3.5, cream)

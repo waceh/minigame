@@ -73,7 +73,7 @@
 
 Godot 4.5 프로젝트 원본은 `jumpking/`에, 웹 빌드는 `jumpking/web/`에 있습니다. 게임을 수정한 뒤에는 Godot에서 프로젝트를 열고 **프로젝트 > 내보내기 > Web**으로 다시 빌드할 수 있습니다. 배포할 때는 다음 버전을 함께 올려 브라우저가 새 게임 파일을 받도록 합니다.
 - `jumpking.html`의 iframe·CSS·JS 쿼리 버전
-- `jumpking/web/index.html`의 `GODOT_CONFIG.mainPack` (`index.pck?v=1.3.1`; Godot 내보내기 후 다시 설정)
+- `jumpking/web/index.html`의 `GODOT_CONFIG.mainPack` (`index.pck?v=1.3.4`; Godot 내보내기 후 다시 설정)
 - `jumpking-sw.js`의 `VERSION`
 
 설치용 웹 매니페스트는 `jumpking.webmanifest`, 오프라인 캐시는 `jumpking-sw.js`에서 관리합니다. Godot 자체 PWA 내보내기는 끈 상태로 유지합니다. 업데이트는 진행 중인 게임을 중단하지 않고 게임 탭을 모두 닫은 뒤 다음 실행에 적용됩니다.
@@ -118,7 +118,7 @@ Godot 4.5 프로젝트 원본은 `jumpking/`에, 웹 빌드는 `jumpking/web/`�
 
 ### 8. 스카이로드 (Godot 3D)
 
-고전 우주 도로 게임에서 영감을 받은 3D 점프 러너입니다. 좌우로 조종하고 속도를 조절하며 틈과 장애물을 넘으세요. 빛나는 발사 타일을 밟으면 초고속으로 높이 솟아 긴 공백을 건넌 뒤 착지합니다. 연료와 산소를 채우는 타일을 밟고 세 코스를 완주하면 됩니다.
+고전 우주 도로 게임에서 영감을 받은 3D 점프 러너입니다. 우주복을 입은 시바견이 작은 원반형 우주선을 타고 달리며, 결승선에서는 앞모습 세레머니를 보여줍니다. 좌우로 조종하고 속도를 조절하며 틈과 장애물을 넘으세요. 빛나는 발사 타일을 밟으면 초고속으로 높이 솟아 긴 공백을 건넌 뒤 착지합니다. 연료와 산소를 채우는 타일을 밟고 세 코스를 완주하면 됩니다.
 
 - 실행: `skyroad.html`, Godot 4.5 원본: `skyroad/`
 - PC: 좌우 방향키/A·D 이동, 위아래 방향키/W·S 가속·감속, Space 점프, R 다시 시작, Esc 일시정지.

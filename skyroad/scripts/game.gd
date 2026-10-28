@@ -4,6 +4,8 @@ const Track = preload("res://scripts/track.gd")
 const FONT = preload("res://font.ttf")
 const SpeedLinesScript = preload("res://scripts/speed_lines.gd")
 const JoystickScript = preload("res://scripts/joystick.gd")
+const SHIBA_BACK_TEXTURE = preload("res://assets/shiba_astronaut_ufo_back.png")
+const SHIBA_CELEBRATE_TEXTURE = preload("res://assets/shiba_astronaut_celebrate.png")
 const TILE_SIZE := 4.0
 const SHIP_HEIGHT := 0.55
 const JUMP_HEIGHT_MULTIPLIER := sqrt(3.0)
@@ -25,6 +27,7 @@ var oxygen := 100.0
 var elapsed := 0.0
 var last_pad := ""
 var message := ""
+var celebration_time := 0.0
 var touch_steer := 0.0
 var touch_fast := false
 var touch_brake := false
@@ -33,6 +36,7 @@ var stars: Array[MeshInstance3D] = []
 
 var course_root: Node3D
 var ship: Node3D
+var character_sprite: Sprite3D
 var camera: Camera3D
 var hud: CanvasLayer
 var status_label: Label
@@ -41,7 +45,6 @@ var title_label: Label
 var fuel_bar: ProgressBar
 var oxygen_bar: ProgressBar
 var speed_lines
-var engine_trails: Array[MeshInstance3D] = []
 var joystick
 var action_buttons: Dictionary = {}
 var action_touches: Dictionary = {}
@@ -133,14 +136,12 @@ func _road_batch(transforms: Array[Transform3D], color: Color) -> void:
 func _create_ship() -> void:
 	ship = Node3D.new()
 	add_child(ship)
-	_box(ship, Vector3(1.6, 0.35, 2.3), Vector3(0, 0, 0), Color("d7e7f5"))
-	_box(ship, Vector3(0.65, 0.33, 0.9), Vector3(0, 0.31, -0.2), Color("4ac9eb"), true)
-	_box(ship, Vector3(2.5, 0.12, 0.65), Vector3(0, -0.08, 0.4), Color("fb646d"))
-	for side in [-1, 1]:
-		_box(ship, Vector3(0.38, 0.18, 0.38), Vector3(side * 0.55, -0.23, 1.08), Color("ffb650"), true)
-		var trail := _box(ship, Vector3(0.17, 0.12, 4.0), Vector3(side * 0.55, -0.23, 3.15), Color("76eaff"), true)
-		trail.visible = false
-		engine_trails.append(trail)
+	character_sprite = Sprite3D.new()
+	character_sprite.texture = SHIBA_BACK_TEXTURE
+	character_sprite.pixel_size = 0.003
+	character_sprite.position.y = 1.65
+	character_sprite.shaded = false
+	ship.add_child(character_sprite)
 	ship.position = Vector3(player_x, player_y, player_z)
 
 func _build_course() -> void:
@@ -271,6 +272,7 @@ func _create_hud() -> void:
 		button.text = spec[0]
 		button.custom_minimum_size = Vector2(100, 110)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.focus_mode = Control.FOCUS_NONE
 		button.add_theme_font_size_override("font_size", 23)
 		buttons.add_child(button)
 		action_buttons[spec[1]] = button
@@ -336,11 +338,13 @@ func _start() -> void:
 	elapsed = 0
 	last_pad = ""
 	message = ""
+	celebration_time = 0.0
 	touch_steer = 0.0
 	action_touches.clear()
 	mouse_actions.clear()
 	_refresh_actions()
 	_build_course()
+	_update_character_pose(0.0)
 	_update_display()
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -363,6 +367,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	if mode != "playing":
+		_update_character_pose(delta)
 		_update_camera(delta)
 		return
 	var dt := minf(delta, 0.05)
@@ -433,13 +438,24 @@ func _physics_process(delta: float) -> void:
 			message = "코스 통과! 다음 코스로 이동합니다"
 	ship.position = Vector3(player_x, player_y, player_z)
 	ship.rotation.z = lerpf(ship.rotation.z, -steer * 0.16, dt * 8)
-	for trail in engine_trails:
-		trail.visible = boost_time > 0.0
+	_update_character_pose(dt)
 	speed_lines.intensity = clampf((speed - 21.0) / 45.0, 0.0, 1.0)
 	speed_lines.motion += dt * speed * 4.0
 	speed_lines.queue_redraw()
 	_update_camera(dt)
 	_update_display()
+
+func _update_character_pose(delta: float) -> void:
+	if mode in ["clear", "complete"]:
+		celebration_time += delta
+		character_sprite.texture = SHIBA_CELEBRATE_TEXTURE
+		character_sprite.position.y = 1.65 + absf(sin(celebration_time * 7.0)) * 0.45
+		character_sprite.rotation.z = sin(celebration_time * 5.0) * 0.1
+		ship.rotation.z = lerpf(ship.rotation.z, 0.0, minf(1.0, delta * 5.0))
+	else:
+		character_sprite.texture = SHIBA_BACK_TEXTURE
+		character_sprite.position.y = 1.65
+		character_sprite.rotation.z = 0.0
 
 func _update_camera(dt: float) -> void:
 	var desired := Vector3(player_x * 0.45, maxf(5.0, player_y + (5.0 if boost_time > 0.0 else 4.3)), player_z + (15.0 if boost_time > 0.0 else 12.0))
