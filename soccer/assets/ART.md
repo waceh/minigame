@@ -1,4 +1,6 @@
-# Forest Football 11 art
+# Soccer art history
+
+The current 2.0 release uses procedural 3D human meshes, articulated animation and a 3D stadium. The two PNGs below are retained as legacy assets from the previous HD-2D version and are excluded from the active Web pack.
 
 `players.png` is an original transparent 4×4 sprite atlas created with the built-in ImageGen tool on 2026-10-30. The original image is saved without bitmap edits; Godot selects directional animation frames and scans the alpha channel to align each frame's feet to the pitch.
 

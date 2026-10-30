@@ -31,6 +31,8 @@ func run_test() -> void:
 	key(KEY_W,true);assert(game.held("sprint") and not game.held("up"));key(KEY_W,false)
 	fixture(game)
 	var old:int=game.controlled
+	var original_camera:int=game.camera_mode
+	key(KEY_C,true);key(KEY_C,false);assert(game.camera_mode==(original_camera+1)%3)
 	key(KEY_Q,true);assert(game.held("feint") and game.controlled==old);key(KEY_Q,false)
 	key(KEY_SHIFT,true);assert(game.held("cut") and not game.held("sprint"));key(KEY_SHIFT,false)
 	key(KEY_RIGHT,true);assert(game.held("right"));key(KEY_RIGHT,false)
