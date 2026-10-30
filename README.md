@@ -127,6 +127,38 @@ Godot 4.5 프로젝트 원본은 `jumpking/`에, 웹 빌드는 `jumpking/web/`�
 - 웹 빌드: `godot --headless --path skyroad --export-pack Web /절대경로/minigame/skyroad/web/index.pck`
 - 웹 런타임은 `jumpking/web/`의 Godot 4.5 파일을 공유합니다. 한글 글꼴 라이선스는 `skyroad/OFL.txt`에 있습니다.
 
+### 9. 포레스트 클래시 (Godot 2.5D)
+
+Godot 4.5의 2.5D 격투 게임입니다. 독자적인 도트 격투가 청린과 적월이 입체 숲 경기장에서 겨룹니다. 16프레임 캐릭터 시트, 도트 나무·꽃·바위, 3D 지형과 깊이 이동, 추적 카메라, 타격 정지·불꽃·효과음을 구현했습니다. CPU 대전(연습/보통/도전), 같은 키보드의 로컬 2인 대전, 60초 라운드와 2라운드 선승을 지원합니다. 기존 대전 규칙과 조작은 그대로입니다.
+
+- 실행: `fighter.html`, Godot 프로젝트: `fighter/`.
+- 1P: WASD 이동/횡이동, J 펀치, K 킥, U 띄우기, I 강킥, L 가드.
+- 2P: 방향키 이동/횡이동, 키보드 상단 숫자 1 펀치, 2 킥, 4 띄우기, 5 강킥, 3 가드.
+- Esc 또는 상단 버튼으로 일시정지. 창이 포커스를 잃으면 자동 일시정지합니다.
+- 모바일은 화면 터치 버튼 사용. 하단 ‘터치 조작’으로 표시를 전환할 수 있습니다. 가로 화면을 권장합니다.
+- 횡이동으로 직선 공격을 피하고, 띄우기 후 펀치/킥을 연결하면 공중 콤보가 됩니다.
+- 검증: `godot --headless --path fighter --script tests/game_test.gd`.
+- 웹 빌드: `godot --headless --path fighter --export-pack Web /절대경로/minigame/fighter/web/index.pck`.
+- `jumpking/web/`의 Godot 4.5 런타임을 공유합니다. 수동 웹 셸을 덮어쓰지 마세요. 빌드 갱신 시 `fighter.html` iframe 쿼리와 `fighter/web/index.html`의 mainPack 버전을 함께 올리세요.
+- 캐릭터와 숲의 도트 이미지 2개는 내장 ImageGen으로 생성했습니다. 파일·프롬프트·아틀라스 설명은 `fighter/assets/ART.md`를 참고하세요. 3D 지형과 효과는 코드로 작성했습니다. 글꼴 Noto Sans KR 라이선스는 `fighter/OFL.txt`에 있습니다.
+
+### 10. 포레스트 풋볼 11 (Godot 2.5D)
+
+포레스트 클래시의 도트 선수·입체 숲 스타일을 이어가는 11대11 아케이드 축구입니다. 팀마다 필드 선수 10명과 골키퍼 1명이 뛰며, 사용자는 청록색 팀의 한 선수를 조작하고 나머지는 AI가 움직입니다. 공격·수비 포메이션, 공 압박, 자동 골키퍼, 패스 수신 선수로의 전환, 3분 경기와 재시작을 지원합니다.
+
+- 실행: `soccer.html`, Godot 4.5 프로젝트: `soccer/`.
+- 방향키 이동, W 달리기(스태미나 소모), S 짧은 패스, D를 길게 눌렀다 떼면 충전 슛, A 로빙 롱패스, E 동료 앞 공간으로 쓰루패스.
+- Q + 방향키: 페인트, Shift + 방향키: 빠른 방향 전환. 공을 가진 상태에서 사용하며 스태미나와 재사용 대기시간이 있습니다. 키를 누른 채로 두어도 자동 반복하지 않습니다.
+- L 태클, Tab 공에 가까운 선수로 전환. 패스 수신자는 자동으로 선택되며 입력이 없으면 패스 목표 지점으로 이동합니다.
+- 킥 소리는 부드러운 접촉음과 낮은 공의 공명음을 합성하며, 패스보다 강한 슛이 더 묵직하게 들립니다.
+- 슛할 때 위/아래 이동키로 골문 위쪽/아래쪽 코너를 노릴 수 있습니다. 현재 선수는 노란 원으로 표시합니다.
+- Esc/버튼 일시정지, 창 포커스를 잃으면 자동 정지. 모바일은 다중 터치 버튼을 지원하며 가로 화면을 권장합니다.
+- 난이도 3종. 골라인에서 골문 밖으로 나가거나 터치라인에 닿으면 공이 튕기는 아케이드 규칙이며, 오프사이드·파울·스로인은 없습니다.
+- 검증: `godot --headless --path soccer --script tests/game_test.gd`.
+- 웹 빌드: `godot --headless --path soccer --export-pack Web /절대경로/minigame/soccer/web/index.pck`.
+- `jumpking/web/`의 Godot 4.5 런타임을 공유합니다. 수동 셸은 덮어쓰지 마세요. 재빌드 후 `soccer.html` iframe과 `soccer/web/index.html` mainPack의 버전을 함께 올리세요.
+- 생성 이미지와 프롬프트는 `soccer/assets/ART.md`, 글꼴 라이선스는 `soccer/OFL.txt`를 참고하세요.
+
 ## 🚀 실행 방법
 
 ### 로컬 실행

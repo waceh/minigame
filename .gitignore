@@ -15,3 +15,9 @@ cardduel/.godot/
 starfighter/.godot/
 
 blockworld/.godot/
+
+# Godot fighter editor cache
+fighter/.godot/
+
+# Godot soccer editor cache
+soccer/.godot/
