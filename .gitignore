@@ -3,6 +3,7 @@
 .claude/
 
 # OS
+_site/
 .DS_Store
 Thumbs.db
 

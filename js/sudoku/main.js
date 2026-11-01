@@ -6,6 +6,45 @@
     let gameDifficulty = 'normal', hintsUsed = 0, checksUsed = 0;
     let pendingRecord = null;
     let onlineRun = null, loading = false, onlineStarted = 0;
+    let recordPublished = false;
+    function persist() {
+        if (!values || loading) return;
+        const state = { puzzle, solution, values, notes, selected, pencil, history: history.slice(-100), elapsed,
+            gameDifficulty, hintsUsed, checksUsed, onlineRun, onlineStarted, won, pendingRecord, recordPublished,
+            recordName: $('record-name').value };
+        let saved = false;
+        try { saved = window.SudokuSession.save(window.localStorage, state); } catch {}
+        $('session-status').textContent = saved ? '진행 자동 저장 · 새로고침해도 이어하기' : '자동 저장을 사용할 수 없습니다. 브라우저의 사이트 저장 권한을 확인해 주세요.';
+    }
+    function savePreferences() {
+        try { window.SudokuSession.preferences(window.localStorage, { difficulty: $('difficulty').value, mode: $('game-mode').value }); } catch {}
+    }
+    $('difficulty').onchange = savePreferences;
+    $('game-mode').onchange = savePreferences;
+    $('record-name').addEventListener('input', persist);
+    function restore() {
+        let state;
+        try {
+            const preferences = window.SudokuSession.preferences(window.localStorage);
+            $('difficulty').value = preferences.difficulty; $('game-mode').value = preferences.mode;
+            state = window.SudokuSession.load(window.localStorage);
+        } catch { return false; }
+        if (!state) return false;
+        ({ puzzle, solution, values, notes, selected, pencil, history, elapsed, gameDifficulty, hintsUsed, checksUsed, onlineRun, onlineStarted } = state);
+        won = Boolean(state.won); recordPublished = Boolean(state.recordPublished);
+        pendingRecord = won && state.pendingRecord && state.pendingRecord.token === onlineRun?.token ? state.pendingRecord : null;
+        $('difficulty').value = gameDifficulty; $('game-mode').value = onlineRun ? 'online' : 'personal';
+        $('online-difficulty').value = gameDifficulty;
+        $('record-name').value = typeof state.recordName === 'string' ? state.recordName.slice(0, 20) : '플레이어';
+        lastTick = Date.now(); updateTimer();
+        if (won) {
+            showCompletion();
+            if (recordPublished) { $('save-record').disabled = true; $('save-status').textContent = '등록한 완료 기록입니다.'; }
+        }
+        message(won ? '완료한 게임을 불러왔습니다. 새 게임으로 다시 도전할 수 있습니다.' : `${labels[gameDifficulty]} 게임을 이어서 진행합니다. 입력과 메모를 복원했습니다.`);
+        render();
+        return true;
+    }
     let rankingRequest = 0;
     async function renderOnlineRanking() {
         const requestId = ++rankingRequest;
@@ -33,6 +72,7 @@
             elapsed = result.elapsed;
             $('timer').textContent = formatTime(result.elapsed);
             $('finish-summary').textContent = `${labels[record.difficulty]} · 온라인 ${formatTime(result.elapsed)} (서버 확인)`;
+            persist();
         }
     }
     const labels = { easy: '쉬움', normal: '보통', hard: '어려움' };
@@ -53,9 +93,11 @@
                 await verifyOnline(record);
                 const result = await window.SudokuOnline.request(`/${record.token}/publish`, { name });
                 if (pendingRecord !== record) return;
+                recordPublished = true;
                 $('save-status').textContent = result.rank ? `${labels[record.difficulty]} ${result.rank}위로 등록했습니다!` : '완료했습니다. 순위표에는 상위 100개 기록만 보관합니다.';
                 $('online-difficulty').value = record.difficulty;
                 renderOnlineRanking();
+                persist();
             } catch (error) {
                 if (pendingRecord === record) { $('save-record').disabled = false; $('save-status').textContent = error.message + ' 기록 저장을 눌러 재시도할 수 있습니다.'; }
             }
@@ -105,6 +147,7 @@
         $('undo').disabled = !history.length || won || loading;
         for (const id of ['notes', 'erase', 'check', 'hint']) $(id).disabled = won || loading || (Boolean(onlineRun) && ['check', 'hint'].includes(id));
         $('numbers').querySelectorAll('button').forEach(button => { button.disabled = won || loading; });
+        persist();
     }
     function snapshot() { history.push({ values: values.slice(), notes: notes.map(n => n.slice()) }); }
     function finishMove() {
@@ -115,18 +158,21 @@
             message(`완성! ${$('timer').textContent} 만에 모든 칸을 채웠습니다.${onlineRun ? ' 완료 기록에서 순위를 등록하세요.' : ' 다음에는 기록 경쟁에 도전해 보세요!'}`);
             pendingRecord = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, difficulty: gameDifficulty, elapsed: Math.floor(elapsed), hints: hintsUsed, checks: checksUsed, completedAt: Date.now() };
             if (onlineRun) { pendingRecord.token = onlineRun.token; pendingRecord.values = values.slice(); }
-            $('finish-summary').textContent = `${labels[gameDifficulty]} · ${formatTime(elapsed)} · 힌트 ${hintsUsed}회 · 오답 확인 ${checksUsed}회`;
-            $('finish-record').hidden = false;
-            $('save-record').disabled = !onlineRun;
-            $('record-form').hidden = !onlineRun;
-            $('save-status').textContent = onlineRun ? '이름을 입력하고 기록 저장을 누르세요.' : '';
-            $('record-privacy').textContent = onlineRun ? '이름과 완료 시간이 순위표에 공개됩니다.' : '개인 연습은 순위에 등록되지 않습니다. 기록 경쟁 모드에서 도전하세요.';
-            if (onlineRun) {
-                const record = pendingRecord;
-                verifyOnline(record).catch(error => { if (pendingRecord === record && !$('save-record').disabled) $('save-status').textContent = error.message + ' 기록 저장을 눌러 재시도하세요.'; });
-            }
+            showCompletion();
         }
         render();
+    }
+    function showCompletion() {
+        $('finish-summary').textContent = `${labels[gameDifficulty]} · ${formatTime(elapsed)} · 힌트 ${hintsUsed}회 · 오답 확인 ${checksUsed}회`;
+        $('finish-record').hidden = false;
+        $('save-record').disabled = !onlineRun;
+        $('record-form').hidden = !onlineRun;
+        $('save-status').textContent = onlineRun ? '이름을 입력하고 기록 저장을 누르세요.' : '';
+        $('record-privacy').textContent = onlineRun ? '이름과 완료 시간이 순위표에 공개됩니다.' : '개인 연습은 순위에 등록되지 않습니다. 기록 경쟁 모드에서 도전하세요.';
+        if (onlineRun && pendingRecord && !recordPublished) {
+            const record = pendingRecord;
+            verifyOnline(record).catch(error => { if (pendingRecord === record && !$('save-record').disabled) $('save-status').textContent = error.message + ' 기록 저장을 눌러 재시도하세요.'; });
+        }
     }
     function enter(n) {
         if (won || loading || puzzle[selected]) return;
@@ -188,6 +234,9 @@
         onlineRun = online ? next : null; onlineStarted = Date.now();
         loading = false; $('new-game').disabled = false;
         hintsUsed = 0; checksUsed = 0;
+        recordPublished = false; savePreferences();
+        $('online-difficulty').value = gameDifficulty;
+        renderOnlineRanking();
         pendingRecord = null; $('finish-record').hidden = true;
         values = puzzle.slice(); notes = Array.from({ length: 81 }, () => []); history = []; errors.clear();
         selected = puzzle.indexOf(0); won = false; pencil = false; elapsed = 0; lastTick = Date.now(); $('timer').textContent = '00:00';
@@ -216,7 +265,8 @@
         event.preventDefault(); selected = next; render(); cells[selected].focus();
     });
     setInterval(updateTimer, 1000);
-    document.addEventListener('visibilitychange', () => { lastTick = Date.now(); });
-    renderOnlineRanking();
-    start();
+    document.addEventListener('visibilitychange', () => { lastTick = Date.now(); persist(); });
+    window.addEventListener('pagehide', () => { updateTimer(); persist(); });
+    if (restore()) renderOnlineRanking();
+    else start();
 })();
