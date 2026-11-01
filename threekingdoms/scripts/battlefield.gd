@@ -1,9 +1,12 @@
 extends SubViewportContainer
 const V=preload("res://scripts/visuals.gd")
 const R=preload("res://scripts/roster.gd")
+const OAK=preload("res://assets/oak.png")
 const ART=preload("res://assets/commanders.png")
 const HEROES=preload("res://assets/chibi-heroes.png")
-const RECRUITS=preload("res://assets/chibi-recruits.png")
+const COMMON_SHU=preload("res://assets/chibi-common-shu.png")
+const COMMON_WEI=preload("res://assets/chibi-common-wei.png")
+const COMMON_WU=preload("res://assets/chibi-common-wu.png")
 const COURT=preload("res://assets/chibi-court.png")
 const GENERALS=preload("res://assets/chibi-generals.png")
 const VANGUARDS=preload("res://assets/chibi-vanguards.png")
@@ -25,9 +28,9 @@ var ribbon_material:StandardMaterial3D
 var attack_clock:=0.0
 var hq_bounds:=Rect2()
 func _ready() -> void:
-	position=Vector2(0,36);size=Vector2(1280,560);mouse_filter=Control.MOUSE_FILTER_IGNORE
-	viewport=SubViewport.new();viewport.size=Vector2i(1280,560);viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS;viewport.handle_input_locally=false
-	viewport.msaa_3d=Viewport.MSAA_2X;add_child(viewport)
+	position=Vector2(0,32);size=Vector2(1280,578);mouse_filter=Control.MOUSE_FILTER_IGNORE
+	viewport=SubViewport.new();viewport.size=Vector2i(1280,578);viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS;viewport.handle_input_locally=false
+	viewport.msaa_3d=Viewport.MSAA_4X;add_child(viewport)
 	world=Node3D.new();viewport.add_child(world)
 	camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=zoom;camera.near=.1;camera.far=180;camera.current=true;world.add_child(camera)
 	set_camera();build_terrain()
@@ -53,34 +56,50 @@ func grass_material() -> ShaderMaterial:
 	var shader:=Shader.new()
 	shader.code="""
 shader_type spatial;
-render_mode unshaded;
-varying vec3 world_position;
-void vertex(){world_position=(MODEL_MATRIX*vec4(VERTEX,1.)).xyz;}
+varying vec3 wp;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+void vertex(){wp=(MODEL_MATRIX*vec4(VERTEX,1.)).xyz;}
 void fragment(){
- vec2 p=world_position.xz;
- float patches=sin(p.x*.24)*sin(p.y*.21)*.5+.5;
- vec3 grass=mix(vec3(.57,.75,.42),vec3(.66,.81,.50),patches*.6);
- // Soft rounded road follows the original rectangular enemy route.
+ vec2 p=wp.xz;
+ float broad=noise(p*.35), fine=noise(p*13.);
+ vec3 grass=mix(vec3(.16,.23,.10),vec3(.34,.40,.19),broad);
+ grass+=(fine-.5)*.095+noise(p*3.)*.035;
  vec2 q=abs(p)-vec2(17.4,9.95);
- float distance_to_path=abs(length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-1.5);
- float border=1.-smoothstep(.95,1.05,distance_to_path);
- float road=1.-smoothstep(.76,.84,distance_to_path);
- vec3 color=mix(grass,vec3(.74,.65,.43),border);
- color=mix(color,vec3(.96,.87,.67),road);
- ALBEDO=color;ROUGHNESS=1.;
+ float d=abs(length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-1.5);
+ float edge=1.-smoothstep(.86,1.16,d+noise(p*3.)*.1);
+ float road=1.-smoothstep(.65,.83,d);
+ vec2 cell=p*2.8;cell.x+=mod(floor(cell.y),2.)*.5;
+ vec2 f=fract(cell);float seam=smoothstep(.035,.10,min(min(f.x,1.-f.x),min(f.y,1.-f.y)));
+ vec3 stone=mix(vec3(.20,.20,.17),vec3(.41,.40,.32),seam)*( .87+hash(floor(cell))*.22);
+ ALBEDO=mix(mix(grass,vec3(.23,.21,.13),edge),stone,road);
+ ROUGHNESS=.94;
 }
 """
 	var m:=ShaderMaterial.new();m.shader=shader;return m
-func prop(frame:int, pos:Vector3, height:float, _flip:bool=false) -> void:
+func surface_material(tint:Color, roof_tiles:bool=false) -> ShaderMaterial:
+	var shader:=Shader.new()
+	shader.code="""
+shader_type spatial;
+uniform vec4 tint:source_color;
+uniform float tile_scale=3.;
+varying vec3 wp;
+void vertex(){wp=(MODEL_MATRIX*vec4(VERTEX,1.)).xyz;}
+void fragment(){
+ vec2 p=vec2(wp.x+wp.z*.7,wp.y+wp.z*.7)*tile_scale;
+ p.x+=mod(floor(p.y),2.)*.5;
+ vec2 f=fract(p);float seam=smoothstep(.025,.08,min(min(f.x,1.-f.x),min(f.y,1.-f.y)));
+ float grain=fract(sin(dot(floor(p*28.),vec2(12.9898,78.233)))*43758.5453);
+ ALBEDO=tint.rgb*(.58+seam*.42)*( .91+grain*.15);ROUGHNESS=.88;
+}
+"""
+	var m:=ShaderMaterial.new();m.shader=shader;m.set_shader_parameter("tint",tint);m.set_shader_parameter("tile_scale",5.5 if roof_tiles else 2.0);return m
+func prop(frame:int, pos:Vector3, height:float, flip:bool=false) -> void:
 	if frame>=4:
-		var rock:=V.sphere(world,height*.32,pos+Vector3(0,height*.16,0),V.material(Color("bfd0c4"),0,1));rock.scale=Vector3(1,.65,.85)
+		var rock:=V.sphere(world,height*.32,pos+Vector3(0,height*.16,0),surface_material(Color("697366")));rock.scale=Vector3(1,.65,.85);rock.rotation.y=height
 		return
-	# Rounded orchard trees belong to the same toy-like world as the chibi heroes.
-	var trunk:=V.material(Color("bc9069"),0,1)
-	var leaves:=V.material([Color("579b61"),Color("3f967a"),Color("d78da6")][frame%3],0,1)
-	V.cylinder(world,height*.065,height*.095,height*.55,pos+Vector3(0,height*.27,0),trunk,8)
-	for part in [Vector3(-.19,.65,0),Vector3(.19,.70,.04),Vector3(0,.87,-.03)]:
-		var canopy:=V.sphere(world,height*.30,pos+part*height,leaves);canopy.scale=Vector3(1,.88,1)
+	var tree:=Sprite3D.new();tree.texture=OAK;tree.pixel_size=height/float(OAK.get_height());tree.centered=false;tree.offset=Vector2(-OAK.get_width()*.5,0);tree.billboard=BaseMaterial3D.BILLBOARD_FIXED_Y;tree.alpha_cut=SpriteBase3D.ALPHA_CUT_DISCARD;tree.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS;tree.flip_h=flip;tree.position=pos;tree.modulate=Color(.80,.87,.72) if frame%2 else Color(.92,.94,.82);world.add_child(tree)
+	var shadow:=V.cylinder(world,height*.33,height*.33,.008,pos+Vector3(0,.012,0),V.material(Color("29351c")),32);shadow.scale.z=.6
 func flowers(pos:Vector3, tint:Color) -> void:
 	var stem:=V.material(Color("7ba970"),0,1)
 	var bloom:=V.material(tint,0,1)
@@ -88,6 +107,19 @@ func flowers(pos:Vector3, tint:Color) -> void:
 		var point:=pos+Vector3((i-1)*.22,.12+float(i%2)*.08,0)
 		V.cylinder(world,.018,.025,.25,point,stem,5)
 		V.sphere(world,.10,point+Vector3(0,.16,0),bloom)
+func water_material() -> ShaderMaterial:
+	var sh:=Shader.new();sh.code="""
+shader_type spatial;
+varying vec3 wp;
+void vertex(){wp=(MODEL_MATRIX*vec4(VERTEX,1.)).xyz;}
+void fragment(){
+ float ripple=sin(wp.z*18.+wp.x*5.+TIME*1.7)*sin(wp.x*24.-TIME)*.5+.5;
+ ALBEDO=mix(vec3(.075,.17,.19),vec3(.20,.34,.34),ripple*.5);
+ ROUGHNESS=.3;METALLIC=.25;
+ NORMAL=normalize(vec3((ripple-.5)*.12,0.,1.));
+}
+"""
+	var m:=ShaderMaterial.new();m.shader=sh;return m
 func creek() -> void:
 	var curve:=Curve3D.new()
 	for i in range(7):
@@ -104,11 +136,12 @@ func creek() -> void:
 			var lift:=Vector3(0,.025 if not bank else 0,0)
 			for v in [a,c,b,b,c,d]:st.add_vertex(v+lift)
 		st.generate_normals()
-		var mat:=V.material(Color("f3e2b8") if bank else Color("83d8df"),.02,.3,.35 if not bank else 0.0)
-		mat.cull_mode=BaseMaterial3D.CULL_DISABLED;V.mesh(world,st.commit(),Vector3.ZERO,mat)
+		var mat:Material=V.material(Color("555946"),0,1) if bank else water_material()
+		if mat is StandardMaterial3D:mat.cull_mode=BaseMaterial3D.CULL_DISABLED
+		V.mesh(world,st.commit(),Vector3.ZERO,mat)
 func build_terrain() -> void:
-	var stone:=V.material(Color("f1dfb7"),0,.9);var dark:=V.material(Color("b8ce9d"),0,.95)
-	var roof:=V.material(Color("dd8b76"),0,.85);var wood:=V.material(Color("c49b74"),0,.9)
+	var stone:=surface_material(Color("899080"));var dark:=surface_material(Color("4d5940"))
+	var roof:=surface_material(Color("46535a"),true);var wood:=surface_material(Color("65513c"))
 	V.box(world,Vector3(120,2.8,120),Vector3(0,-1.5,0),dark)
 	V.box(world,Vector3(120,.14,120),Vector3(0,-.07,0),grass_material())
 	# Pastel orchard border, warm tiled gate and an uncluttered central meadow.
@@ -124,9 +157,6 @@ func build_terrain() -> void:
 		for x in range(-20,21,5):
 			if side>0 and abs(x)<12:continue
 			prop(4 if x%2 else 5,Vector3(x,.02,side*14),1.3+absf(x)*.025,x%2==0)
-	for i in range(12):
-		var side:float=-1.0 if i%2 else 1.0
-		flowers(Vector3(-19.8+float(i/2)*7.7,.03,side*13.4),[Color("ffe7a0"),Color("fff5df"),Color("f4b5c5")][i%3])
 	# A creek and small bridge on the inner meadow.
 	creek()
 	for i in range(8):V.box(world,Vector3(3,.12,.28),Vector3(8.8,.14,-1+i*.3),wood)
@@ -142,7 +172,7 @@ func build_terrain() -> void:
 	var sign:=Label3D.new();sign.text="소환진";sign.font=game.FONT;sign.font_size=36;sign.pixel_size=.014;sign.position=camp+Vector3(0,.15,1.25);sign.billboard=BaseMaterial3D.BILLBOARD_ENABLED;sign.modulate=Color("fff3b0");sign.outline_size=6;sign.outline_modulate=Color("7f5539");world.add_child(sign)
 	# Gate at the route start; open center remains passable.
 	build_headquarters(stone,wood,roof)
-	var gate:=to_world(Vector2(94,226))
+	var gate:=to_world(Vector2(94,160)) # Keep solid gate and wall outside the traversable road.
 	for x in [-1.8,1.8]:
 		V.box(world,Vector3(1.4,3.5,1.4),gate+Vector3(x,1.75,0),stone)
 		V.box(world,Vector3(2.2,.3,2.2),gate+Vector3(x,3.6,0),roof)
@@ -156,11 +186,18 @@ func build_terrain() -> void:
 		V.box(world,Vector3(2.1,.18,2.1),p+Vector3(0,2.5,0),wood)
 		V.box(world,Vector3(2.7,.2,2.7),p+Vector3(0,3.3,0),roof)
 		V.box(world,Vector3(2,.3,2),p+Vector3(0,3.5,0),roof)
+	for side in [-1,1]:
+		for i in range(13):
+			var p:=gate+Vector3(side*(3.5+i*.48),0,0)
+			V.box(world,Vector3(.46,1.4,.8),p+Vector3(0,.7,0),stone)
+			if i%2==0:V.box(world,Vector3(.42,.45,.85),p+Vector3(0,1.6,0),stone)
+	for i in range(16):
+		V.cylinder(world,.045,.045,2.6,gate+Vector3(-3.0+i*.4,4.04,0),roof,8).rotation.x=PI*.5
 	# Banner standards and roadside stone lanterns.
 	for team in range(3):
 		var p:=Vector3(-8+team*8,0,-4)
 		V.cylinder(world,.06,.08,3.4,p+Vector3(0,1.7,0),wood)
-		V.box(world,Vector3(1.2,1.8,.04),p+Vector3(.62,2.35,0),V.material(R.COLORS[team]))
+		V.box(world,Vector3(1.2,1.8,.04),p+Vector3(.62,2.35,0),V.material([Color("546e49"),Color("405c79"),Color("8f4639")][team]))
 	for x in [-17.0,17.0]:
 		for z in [-9.5,9.5]:
 			V.box(world,Vector3(.6,.25,.6),Vector3(x,.15,z),stone)
@@ -168,15 +205,15 @@ func build_terrain() -> void:
 			V.box(world,Vector3(.55,.5,.55),Vector3(x,1.15,z),V.material(Color("ffdd80"),0,1,.4))
 			V.box(world,Vector3(.8,.15,.8),Vector3(x,1.48,z),roof)
 	var environment:=WorldEnvironment.new();var env:=Environment.new()
-	env.background_mode=Environment.BG_COLOR;env.background_color=Color("bde0fe")
-	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.ambient_light_color=Color("fff6ea");env.ambient_light_energy=.32
-	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR;env.fog_enabled=false;env.fog_light_color=Color("bde0fe");env.fog_density=.001
+	env.background_mode=Environment.BG_COLOR;env.background_color=Color("343f38")
+	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.ambient_light_color=Color("b8c6c9");env.ambient_light_energy=.65
+	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR;env.fog_enabled=false;env.fog_light_color=Color("343f38");env.fog_density=.001
 	environment.environment=env;world.add_child(environment)
-	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-55,-25,0);sun.light_color=Color("fff8ee");sun.light_energy=.6;sun.shadow_enabled=true;sun.directional_shadow_max_distance=80;world.add_child(sun)
+	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-55,-25,0);sun.light_color=Color("fff8ee");sun.light_energy=1.0;sun.shadow_enabled=true;sun.directional_shadow_max_distance=80;world.add_child(sun)
 func build_headquarters(stone:Material, wood:Material, roof:Material) -> void:
 	var base:=to_world(game.HQ_POINT)
 	V.box(world,Vector3(4.2,.35,3.1),base+Vector3(0,.17,0),stone)
-	V.box(world,Vector3(3.6,1.75,2.6),base+Vector3(0,1.2,0),V.material(Color("f3dbb5"),0,1))
+	V.box(world,Vector3(3.6,1.75,2.6),base+Vector3(0,1.2,0),surface_material(Color("a39779")))
 	for x in [-1.65,1.65]:
 		for z in [-1.15,1.15]:V.box(world,Vector3(.17,2.45,.17),base+Vector3(x,1.45,z),wood)
 	V.box(world,Vector3(.9,1.65,.08),base+Vector3(0,1.1,1.34),wood)
@@ -196,9 +233,11 @@ func headquarters_hit(screen:Vector2) -> bool:
 				else:bounds=bounds.expand(point)
 	return bounds.has_point(screen)
 func art_for(id:int) -> Array:
+	id=R.art_id(id) if id>=0 else id
 	if id>=24:
-		var rows:Dictionary={24:0,25:1,26:3,30:1,31:2,32:3,36:0,37:2,38:1}
-		return [RECRUITS,rows.get(id,0),4,"chibi-recruits.png"]
+		var faction:int=R.data(id).faction
+		var row:int=id-[24,30,36][faction]
+		return [[COMMON_SHU,COMMON_WEI,COMMON_WU][faction],row,3,["chibi-common-shu.png","chibi-common-wei.png","chibi-common-wu.png"][faction]]
 	match id:
 		0:return [HEROES,0,4,"chibi-heroes.png"]
 		1:return [ART,0,4,"commanders.png"]
@@ -226,11 +265,12 @@ func art_for(id:int) -> Array:
 func frame_meta(id:int, frame:int) -> Dictionary:
 	var art:=art_for(id)
 	return Frames.META[art[3]][art[1]][frame]
-func frame_texture(id:int, frame:int) -> AtlasTexture:
+func frame_texture(id:int, frame:int) -> Texture2D:
 	var key:="%d:%d"%[id,frame]
 	if not atlas_cache.has(key):
 		var art:=art_for(id);var meta:=frame_meta(id,frame);var r:Array=meta.rect
-		var texture:=AtlasTexture.new();texture.atlas=art[0];texture.region=Rect2(r[0],r[1],r[2],r[3]);texture.filter_clip=true;atlas_cache[key]=texture
+		var image:Image=art[0].get_image().get_region(Rect2i(r[0],r[1],r[2],r[3]));image.generate_mipmaps()
+		atlas_cache[key]=ImageTexture.create_from_image(image)
 	return atlas_cache[key]
 func portrait_texture(id:int) -> AtlasTexture:
 	var key:="portrait:%d"%id
@@ -252,7 +292,7 @@ func make_actor(row:int, enemy:bool=false) -> Dictionary:
 	sprite.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;root.add_child(sprite)
 	var mat:=V.material(Color(.05,.08,.05,.32));mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
 	var shadow:=V.cylinder(root,.55,.55,.008,Vector3(0,.03,0),mat,24);shadow.scale.z=.65;shadow.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var ring_mat:=V.material(Color("ffea00"),0,1,.8);ring_mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	var ring_mat:=V.material(Color("58dc69"),0,1,.8);ring_mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
 	var ring:=V.ring(root,.68,.045,Vector3(0,.05,0),ring_mat);ring.hide()
 	var nameplate:=Label3D.new();nameplate.font=game.FONT;nameplate.font_size=32;nameplate.pixel_size=.015;nameplate.position.y=2.8;nameplate.billboard=BaseMaterial3D.BILLBOARD_ENABLED;nameplate.outline_size=7;nameplate.outline_modulate=Color("10211a");nameplate.no_depth_test=true;root.add_child(nameplate)
 	var gradient:=Gradient.new();gradient.set_color(0,Color.WHITE);gradient.set_color(1,Color.WHITE)
@@ -263,18 +303,27 @@ func make_actor(row:int, enemy:bool=false) -> Dictionary:
 	return {"root":root,"sprite":sprite,"ring":ring,"label":nameplate,"caption":caption,"health":health,"row":row,"last":Vector3.ZERO,"attack":0.0}
 func place_caption(actor:Dictionary, text:String, point:Vector2, color:Color, shown:bool) -> void:
 	var caption:Label=actor.caption
-	var anchor:=screen_pos(point,2.85)
+	var sprite_height:float=actor.sprite.texture.get_height()*actor.sprite.pixel_size*actor.root.scale.y
+	var top:Vector3=to_world(point)+Vector3.UP*actor.sprite.position.y+camera.global_basis.y*(sprite_height+.25)
+	var anchor:=camera.unproject_position(top)+position
 	caption.visible=shown and Rect2(position,size).has_point(anchor) and game.state!="title"
 	if not caption.visible:return
 	caption.text=text;caption.add_theme_color_override("font_color",color);caption.reset_size()
 	caption.position=Vector2(clampf(anchor.x-caption.size.x*.5,position.x+2,position.x+size.x-caption.size.x-2),maxf(position.y+2,anchor.y-caption.size.y))
 func _process(dt:float) -> void:
 	if not game:return
-	var active:bool=game.state in ["build","battle"] and not game.paused and not game.codex_open
+	var active:bool=game.state in ["build","battle"] and not game.paused
 	if active:
 		clock+=dt;marker_time=maxf(0,marker_time-dt)
 		var pan:=Vector3(float(Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_LEFT)),0,float(Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_UP)))
-		if pan.length()>.1:
+		var mouse:=get_viewport().get_mouse_position()
+		if not game.codex_open and DisplayServer.window_is_focused() and Rect2(position,size).has_point(mouse) and not game.dragging:
+			if mouse.x<position.x+14:pan.x-=1
+			elif mouse.x>position.x+size.x-14:pan.x+=1
+			if mouse.y<position.y+12:pan.z-=1
+			elif mouse.y>position.y+size.y-12:pan.z+=1
+		if not game.codex_open and pan.length()>.1:
+			pan=pan.normalized()
 			focus+=pan*dt*12;focus.x=clampf(focus.x,-10,10);focus.z=clampf(focus.z,-8,8);set_camera()
 	marker.visible=marker_time>0;marker.scale=Vector3.ONE*(1+(1-marker_time)*.7)
 	for u in game.units:
@@ -285,17 +334,17 @@ func _process(dt:float) -> void:
 		var pos:=to_world(point);var delta:Vector3=pos-a.last
 		a.root.position=pos
 
-		var moving:bool=delta.length()>.002
+		var moving:bool=active and delta.length()>maxf(.012,dt*.45)
 		var frame:int=3 if u.pulse>0 else [0,1,0,2][int(clock*8+key)%4] if moving else 0
-		pose_actor(a,u.id,frame,2.4 if u.rank==0 else 2.65,u.face<0)
-		a.sprite.modulate=[Color("e6ffe8"),Color("e1eeff"),Color("ffe7df")][R.data(u.id).faction] if u.rank==0 else Color.WHITE
+		pose_actor(a,u.id,frame,[1.65,1.85,2.05,2.35,2.5,2.65][clampi(u.rank,0,5)],u.face<0)
+		a.sprite.modulate=Color.WHITE
 		if u.pulse>0:
-			a.sprite.position.y=.22;a.sprite.rotation.z=0.0
+			a.sprite.position.y=.04;a.sprite.rotation.z=0.0
 		elif moving:
-			a.sprite.position.y=absf(sin(clock*14.0+key))*.16
-			a.sprite.rotation.z=sin(clock*14.0+key)*.09*(-1.0 if u.face<0 else 1.0)
+			a.sprite.position.y=absf(sin(clock*10.0+key))*.035
+			a.sprite.rotation.z=sin(clock*10.0+key)*.012*(-1.0 if u.face<0 else 1.0)
 		else:
-			a.sprite.position.y=sin(clock*3.5+key)*.035
+			a.sprite.position.y=0.0
 			a.sprite.rotation.z=0.0
 		a.ring.visible=game.selected_slots.has(key)
 		if a.ring.visible:a.ring.rotation.y=clock*3.0
@@ -312,8 +361,8 @@ func _process(dt:float) -> void:
 		var pos:=to_world(point);var delta:Vector3=pos-a.last
 		a.root.position=pos;a.sprite.flip_h=delta.x<-.001 if absf(delta.x)>.001 else a.sprite.flip_h
 		pose_actor(a,-2 if e.boss else -1,[0,1,0,2][int(clock*8+e.uid)%4],2.2,a.sprite.flip_h)
-		a.sprite.position.y=absf(sin(clock*12.0+e.uid))*.13
-		a.sprite.rotation.z=sin(clock*12.0+e.uid)*.07
+		a.sprite.position.y=absf(sin(clock*10.0+e.uid))*.035
+		a.sprite.rotation.z=sin(clock*10.0+e.uid)*.012
 		a.root.scale=Vector3.ONE*(1.55 if e.boss else 1.1 if e.elite else .85)
 		a.sprite.modulate=Color(1.7,1.5,1.3) if e.flash>0 else Color(.7,.85,1) if e.slow>0 else Color.WHITE
 		a.health.scale.x=maxf(.001,e.hp/e.max_hp);a.health.modulate=Color("ffb703") if e.boss else Color("52b788")

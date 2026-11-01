@@ -3,8 +3,8 @@ extends RefCounted
 static func material(color: Color, metallic: float = 0.0, roughness: float = 0.5, emission: float = 0.0) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
-	m.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-	m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	m.diffuse_mode = BaseMaterial3D.DIFFUSE_BURLEY
+	m.specular_mode = BaseMaterial3D.SPECULAR_SCHLICK_GGX
 	m.metallic = metallic
 	m.roughness = roughness
 	if emission > 0:

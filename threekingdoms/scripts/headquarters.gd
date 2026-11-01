@@ -12,7 +12,7 @@ func _ready() -> void:
 	game.label_at(self,"창이 열려 있는 동안 전투가 정지합니다.",Vector2(26,59),16,Color("d6e2ed"))
 	attack_info=game.label_at(self,"",Vector2(26,104),18,Color("f3f6f2"))
 	attack_button=game.button_at(self,"",Rect2(388,106,205,60),attack,true)
-	game.label_at(self,"소환 확률 연구 · 단계당 안흔함 +1%p / 특별함 +0.3%p",Vector2(26,201),17,Color("a6d8f4"))
+	game.label_at(self,"소환 확률 연구 · 단계당 안흔함 +1%p / 희귀 +0.3%p",Vector2(26,201),17,Color("a6d8f4"))
 	odds_info=game.label_at(self,"",Vector2(26,241),17,Color("f3f6f2"))
 	next_info=game.label_at(self,"",Vector2(26,272),17,Color("a4dfb3"))
 	luck_button=game.button_at(self,"",Rect2(26,321,567,53),luck,true)
@@ -25,7 +25,7 @@ func attack() -> void:
 func luck() -> void:
 	game.train_luck();refresh()
 func format_odds(values:Array) -> String:
-	return "흔함 %.1f%%  ·  안흔함 %.1f%%  ·  특별함 %.1f%%"%[values[0]/100.0,values[1]/100.0,values[2]/100.0]
+	return "흔함 %.1f%%  ·  안흔함 %.1f%%  ·  희귀 %.1f%%"%[values[0]/100.0,values[1]/100.0,values[2]/100.0]
 func refresh() -> void:
 	if not attack_info:return
 	attack_info.text="전군 공격력 %d / 10단계\n기본 공격력 +%d%%"%[game.upgrade,game.upgrade*12]

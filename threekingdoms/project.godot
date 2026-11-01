@@ -14,3 +14,6 @@ renderer/rendering_method.mobile="gl_compatibility"
 textures/default_filters/use_nearest_mipmap_filter=false
 [audio]
 driver/enable_input=false
+
+[gui]
+timers/tooltip_delay_sec=0.2

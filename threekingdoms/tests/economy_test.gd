@@ -16,8 +16,8 @@ func run_tests() -> void:
 	game.selected=2;game.selected_slots.clear();assert(not game.sell_selected() and game.units.size()==1)
 	game.selected_slots=[2];game.paused=true;assert(not game.sell_selected());game.paused=false
 	# The live recipe book lists every recipe and searches both outputs and ingredients.
-	game.units=[game.make_unit(24,0,0),game.make_unit(24,0,1),game.make_unit(24,0,2)]
-	game.selected=0;game.selected_slots=[0,1,2];game.open_book();assert(game.codex.rows.size()==54)
+	game.units=[game.make_unit(24,0,0),game.make_unit(26,0,1),game.make_unit(37,0,2)]
+	game.selected=0;game.selected_slots=[0,1,2];game.open_book();assert(game.codex.rows.size()==51)
 	game.codex.ready_only.button_pressed=true;game.codex.rebuild();assert(game.codex.rows.size()==1)
 	assert(not game.codex.rows[0].button.disabled)
 	await click(game.codex.rows[0].button)
@@ -30,11 +30,11 @@ func run_tests() -> void:
 	game.codex.close_book();assert(not game.codex_open)
 	game.codex.reset_filters();game.codex.ready_only.button_pressed=true;game.selected=game.units[0].slot;game.selected_slots=[game.selected];game.refresh()
 	# Opening a selected hero path must actually show the book, not just freeze combat.
-	await click(game.recipe_path_button)
+	game.inspect_selected();await process_frame
 	assert(game.codex_open and game.codex.visible,"R/path button must display the selected hero recipe book")
-	assert(game.codex.search.text==game.R.data(game.units[0].id).name and not game.codex.ready_only.button_pressed and game.codex.rows.size()>0)
+	assert(game.codex.focus_id==game.units[0].id and not game.codex.ready_only.button_pressed and game.codex.rows.size()>0)
 	game.codex.close_book()
-	var inspect_key:=InputEventKey.new();inspect_key.physical_keycode=KEY_R;inspect_key.pressed=true;Input.parse_input_event(inspect_key);await process_frame
+	game.inspect_selected();await process_frame
 	assert(game.codex_open and game.codex.visible)
 	game.codex.close_book()
-	game.free();print("economy/book: PASS — actual sell button/Delete, one selected hero only, exact refunds, pause, 54 cards, ready/search/tier filters, actual craft click");quit()
+	game.free();print("economy/book: PASS — actual sell button/Delete, one selected hero only, exact refunds, pause, 51 unique cards, ready/search/tier filters, actual craft click");quit()

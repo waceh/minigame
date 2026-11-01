@@ -48,7 +48,7 @@ func run_tests() -> void:
 	assert(game.detail.text.contains("3名") or game.detail.text.contains("3명"))
 	# Minimap clicks pan the camera without issuing troop orders.
 	var old_target:Vector2=game.units[0].target
-	mouse(game.minimap.global_position+Vector2(180,145),true);await process_frame;mouse(game.minimap.global_position+Vector2(180,145),false);await process_frame
+	mouse(game.minimap.global_position+game.minimap.size*.72,true);await process_frame;mouse(game.minimap.global_position+game.minimap.size*.72,false);await process_frame
 	assert(game.battlefield.focus.length()>1 and game.units[0].target==old_target)
 	# Releasing a world drag over the HUD must not leave selection dragging stuck.
 	game.codex_open=false

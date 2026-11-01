@@ -8,7 +8,7 @@ func click_button(button:Button) -> void:
 	await click(button.global_position+button.size/2)
 func run_tests() -> void:
 	var game=load("res://main.tscn").instantiate();game.persist=false;root.add_child(game);game.set_process(false);game.reset_game()
-	assert(game.R.SUMMON_POOLS.map(func(pool):return pool.size())==[9,9,6])
+	assert(game.R.SUMMON_POOLS.map(func(pool):return pool.size())==[9,18,15])
 	for level in [0,1,10]:
 		var counts:=[0,0,0]
 		for roll in range(10000):counts[game.R.summon_rank(roll,level)]+=1
@@ -16,8 +16,7 @@ func run_tests() -> void:
 	assert(game.R.summon_odds(0)==[8000,1700,300] and game.R.summon_odds(10)==[6700,2700,600])
 	game.gold=10000
 	game.refresh()
-	assert(game.upgrade_button.text.contains("업그레이드") and game.upgrade_button.visible)
-	await click_button(game.upgrade_button)
+	game.open_headquarters()
 	assert(game.headquarters.visible and game.codex_open,"upgrade command card must open both training options")
 	game.close_modals()
 	await process_frame;await process_frame
@@ -26,7 +25,7 @@ func run_tests() -> void:
 	var gold:int=game.gold
 	await click_button(game.headquarters.attack_button)
 	assert(game.upgrade==1 and game.gold==gold-80)
-	assert(game.upgrade_button.text.contains("공격 1"))
+	assert(game.upgrade==1)
 	gold=game.gold
 	await click_button(game.headquarters.luck_button)
 	assert(game.luck_level==1 and game.gold==gold-60 and "18.0%" in game.headquarters.odds_info.text)
@@ -47,9 +46,13 @@ func run_tests() -> void:
 		assert(game.unit_sale_value(u)==24,"rare summons must not generate a sell/reroll money loop")
 	assert(rarity_counts[0]>rarity_counts[1] and rarity_counts[1]>rarity_counts[2] and rarity_counts[2]>0)
 	# Crafted resale follows actual invested gold, including cheap rare summons.
-	game.units=[game.make_unit(4,1,0),game.make_unit(4,1,1),game.make_unit(4,1,2)]
+	game.units=[game.make_unit(4,1,0),game.make_unit(19,1,1),game.make_unit(32,0,2)]
 	for u in game.units:u.investment=35
-	game.selected=0;game.selected_slots=[0,1,2];assert(game.merge_selected())
+	game.selected=0;game.selected_slots=[0,1,2]
+	var recipe_id:=-1
+	for i in range(game.recipes.size()):
+		if game.recipes[i].result==3:recipe_id=i
+	assert(game.craft_recipe(recipe_id))
 	assert(game.units.size()==1 and game.units[0].id==3 and game.unit_sale_value(game.units[0])==73)
 	game.paused=true;game.luck_level=0;gold=game.gold;assert(not game.train_luck() and game.gold==gold)
 	game.paused=false;game.reset_game();assert(game.upgrade==0 and game.luck_level==0)

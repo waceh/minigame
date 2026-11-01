@@ -8,7 +8,7 @@
 | [chibi-generals.png](chibi-generals.png) | 육손 · 황충 · 마초 · 장료 · 허저 |
 | [chibi-vanguards.png](chibi-vanguards.png) | 전위 · 태사자 · 황개 · 능통 · 황건 적장 |
 
-기존 `commanders.png`의 관우·조조·주유, `chibi-heroes.png`의 유비·장비·제갈량·조운도 같은 계열로 연결했습니다. 흔함 장수는 `chibi-recruits.png`의 창병·검병·궁병·책사 실루엣을 사용하고 진영별 색조와 이름으로 구분합니다. 전장·하단 초상화·부대 아이콘·조합 도감은 모두 `battlefield.gd`의 단일 매핑을 사용합니다.
+기존 `commanders.png`의 관우·조조·주유, `chibi-heroes.png`의 유비·장비·제갈량·조운도 같은 계열로 연결했습니다. 흔함 장수 9명도 이제 개별 디자인을 사용합니다. 파일·장비·프롬프트는 [COMMON_ART.md](COMMON_ART.md)를 참고하세요. 전장·하단 초상화·부대 아이콘·조합 도감은 모두 `battlefield.gd`의 단일 매핑을 사용합니다.
 
 `frames.gd`에 각 프레임의 알파 경계와 발 기준점을 기록해 원본 이미지를 자르거나 다시 그리지 않고 `AtlasTexture`로 표시합니다. 배경의 둥근 나무·꽃·바위·건물과 파스텔 잔디·길은 Godot 코드와 셰이더입니다. 기존 사실적인 이미지들은 원본 기록으로 유지하지만 새 웹 빌드에서는 제외합니다.
 
