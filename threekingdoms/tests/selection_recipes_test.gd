@@ -11,6 +11,14 @@ func run_tests() -> void:
 	var tooltip:Control=panel.recipe_buttons[0]._make_custom_tooltip(panel.recipe_buttons[0].tooltip_text)
 	assert(tooltip.get_child(0).text.contains("[color=#"))
 	tooltip.free()
+	for recipe in game.recipes:
+		var markup:String=panel.recipe_help(recipe,true)
+		for id in [recipe.base,recipe.result]+recipe.materials.map(func(m):return m[0]):
+			var color:Color=game.R.RANK_COLORS[game.R.data(id).rank]
+			assert(markup.contains("[color=#%s]%s[/color]"%[color.to_html(false),game.R.title(id)]),"the entire grade and name must keep its own color")
+		var label:=RichTextLabel.new();label.bbcode_enabled=true;label.text=markup
+		assert(label.get_parsed_text()==panel.recipe_help(recipe,false),"color markup must not alter tooltip text")
+		label.free()
 	var first:Array=panel.related_indices(24)
 	for result_index in first:
 		assert(game.recipes[result_index].base==24,"only the designated base can show a recipe")

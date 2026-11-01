@@ -57,23 +57,23 @@ func refresh() -> void:
 		if item>=current.size():continue
 		var recipe_index:int=current[item];var recipe:Dictionary=game.recipes[recipe_index];var button:Button=cells[4+offset]
 		button.icon=game.portrait_for(recipe.result);button.expand_icon=true;button.add_theme_constant_override("icon_max_width",42)
-		var terms:=PackedStringArray()
-		for ingredient in recipe.materials:
-			terms.append(game.R.title(ingredient[0])+(" ×%d"%ingredient[1] if ingredient[1]>1 else ""))
-		var text:String="기준 유닛: "+game.R.title(recipe.base)+"\n\n"+" + ".join(terms)+"\n→ "+game.R.title(recipe.result)+"\n\n재료 보유 / 필요\n"
-		for ingredient in recipe.materials:
-			var count:=0
-			for unit in game.units:
-				if unit.id==ingredient[0]:count+=1
-			text+="%s  %d / %d%s\n"%[game.R.title(ingredient[0]),count,ingredient[1]," · %d명 부족"%(ingredient[1]-count) if count<ingredient[1] else " · 준비 완료"]
 		var ready:bool=not game.recipe_indices(recipe).is_empty()
-		button.tooltip_text=text+("클릭하여 조합" if ready else "재료 부족")
-		var colored:String=button.tooltip_text
-		var ids:Array=[recipe.result]
-		for ingredient in recipe.materials:
-			if not ids.has(ingredient[0]):ids.append(ingredient[0])
-		for unit_id in ids:
-			var title:String=game.R.title(unit_id);var color:Color=game.R.RANK_COLORS[game.R.data(unit_id).rank]
-			colored=colored.replace(title,"[color=#%s]%s[/color]"%[color.to_html(false),title])
-		button.set_meta("recipe_bbcode",colored)
+		button.tooltip_text=recipe_help(recipe,false)
+		button.set_meta("recipe_bbcode",recipe_help(recipe,true))
 		button.disabled=blocked or not ready;recipe_buttons[recipe_index]=button
+func help_title(id:int, colored:bool) -> String:
+	var title:String=game.R.title(id)
+	if not colored:return title
+	var color:Color=game.R.RANK_COLORS[game.R.data(id).rank]
+	return "[color=#%s]%s[/color]"%[color.to_html(false),title]
+func recipe_help(recipe:Dictionary, colored:bool) -> String:
+	var terms:=PackedStringArray()
+	for ingredient in recipe.materials:
+		terms.append(help_title(ingredient[0],colored)+(" ×%d"%ingredient[1] if ingredient[1]>1 else ""))
+	var text:String="기준 유닛: "+help_title(recipe.base,colored)+"\n\n"+" + ".join(terms)+"\n→ "+help_title(recipe.result,colored)+"\n\n재료 보유 / 필요\n"
+	for ingredient in recipe.materials:
+		var count:=0
+		for unit in game.units:
+			if unit.id==ingredient[0]:count+=1
+		text+="%s  %d / %d%s\n"%[help_title(ingredient[0],colored),count,ingredient[1]," · %d명 부족"%(ingredient[1]-count) if count<ingredient[1] else " · 준비 완료"]
+	return text+("클릭하여 조합" if not game.recipe_indices(recipe).is_empty() else "재료 부족")
