@@ -4,14 +4,14 @@ func _process(_dt:float) -> void:queue_redraw()
 func map_point(point:Vector2) -> Vector2:
 	return Vector2(10,8)+(point-Vector2(52,180))*Vector2((size.x-20)/840.0,(size.y-16)/570.0)
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO,size),Color("122c25"))
+	draw_rect(Rect2(Vector2.ZERO,size),Color("8eb77b"))
 	for i in range(7):
 		var x:float=14+i*27
 		draw_line(Vector2(x,8),Vector2(x-8,size.y-8),Color(.25,.4,.25,.25),4)
 	var route:=PackedVector2Array()
 	for p in game.PATH:route.append(map_point(p))
-	draw_polyline(route,Color("94815b"),7,true)
-	draw_polyline(route,Color("b4a477"),1,true)
+	draw_polyline(route,Color("d3b987"),7,true)
+	draw_polyline(route,Color("f7e4ba"),1,true)
 	for e in game.enemies:draw_circle(map_point(game.path_pos(e.distance)),3.3 if e.boss else 1.8,Color("f18065"))
 	for u in game.units:
 		var p:=map_point(u.pos)
@@ -21,7 +21,7 @@ func _draw() -> void:
 	for p in [field.position,field.position+Vector2(field.size.x,0),field.position+field.size,field.position+Vector2(0,field.size.y),field.position]:
 		var point:=map_point(field.ground_point(p));point=point.clamp(Vector2(1,1),size-Vector2.ONE);corners.append(point)
 	draw_polyline(corners,Color(.9,.89,.69,.75),1,true)
-	draw_rect(Rect2(Vector2.ZERO,size),Color("6b7561"),false,1)
+	draw_rect(Rect2(Vector2.ZERO,size),Color("b5ccad"),false,1)
 func _gui_input(event:InputEvent) -> void:
 	if game.paused or game.codex_open or game.state not in ["build","battle"]:return
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:

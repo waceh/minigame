@@ -1,5 +1,7 @@
 # Three Kingdoms RTS artwork
 
+최신 2D 캐릭터 연결과 새 이미지 프롬프트: [CHIBI_ART.md](CHIBI_ART.md). 아래는 이전 아트의 생성 기록입니다.
+
 Created with the built-in ImageGen tool on 2026-10-31. These are original sprites; no Warcraft assets are included. Generated images retain their original RGBA transparency and resolution without raster editing. Godot selects atlas frames and mirrors them toward movement/attack directions.
 
 | File | Actual size | Grid | Rows |

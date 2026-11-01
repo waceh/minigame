@@ -15,12 +15,18 @@ func run_tests() -> void:
 		assert(counts==game.R.summon_odds(level) and counts.reduce(func(a,b):return a+b)==10000)
 	assert(game.R.summon_odds(0)==[8000,1700,300] and game.R.summon_odds(10)==[6700,2700,600])
 	game.gold=10000
+	game.refresh()
+	assert(game.upgrade_button.text.contains("업그레이드") and game.upgrade_button.visible)
+	await click_button(game.upgrade_button)
+	assert(game.headquarters.visible and game.codex_open,"upgrade command card must open both training options")
+	game.close_modals()
 	await process_frame;await process_frame
 	await click(game.battlefield.screen_pos(game.HQ_POINT,1.6))
 	assert(game.codex_open and game.headquarters.visible and not game.codex.visible)
 	var gold:int=game.gold
 	await click_button(game.headquarters.attack_button)
 	assert(game.upgrade==1 and game.gold==gold-80)
+	assert(game.upgrade_button.text.contains("공격 1"))
 	gold=game.gold
 	await click_button(game.headquarters.luck_button)
 	assert(game.luck_level==1 and game.gold==gold-60 and "18.0%" in game.headquarters.odds_info.text)

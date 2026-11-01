@@ -2,16 +2,12 @@ extends SubViewportContainer
 const V=preload("res://scripts/visuals.gd")
 const R=preload("res://scripts/roster.gd")
 const ART=preload("res://assets/commanders.png")
-const SUPPORT=preload("res://assets/commanders-support.png")
-const LEGENDS=preload("res://assets/commanders-legends.png")
+const HEROES=preload("res://assets/chibi-heroes.png")
+const RECRUITS=preload("res://assets/chibi-recruits.png")
+const COURT=preload("res://assets/chibi-court.png")
+const GENERALS=preload("res://assets/chibi-generals.png")
+const VANGUARDS=preload("res://assets/chibi-vanguards.png")
 const Frames=preload("res://scripts/frames.gd")
-const OAK=preload("res://assets/oak.png")
-const BASE_SHU=preload("res://assets/base-shu.png")
-const BASE_WEI=preload("res://assets/base-wei.png")
-const BASE_WU=preload("res://assets/base-wu.png")
-const RECRUIT_SHU=preload("res://assets/recruits-shu.png")
-const RECRUIT_WEI=preload("res://assets/recruits-wei.png")
-const RECRUIT_WU=preload("res://assets/recruits-wu.png")
 var game
 var viewport:SubViewport
 var world:Node3D
@@ -57,43 +53,41 @@ func grass_material() -> ShaderMaterial:
 	var shader:=Shader.new()
 	shader.code="""
 shader_type spatial;
-varying vec3 w;
-float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
-void vertex(){w=(MODEL_MATRIX*vec4(VERTEX,1.)).xyz;}
+render_mode unshaded;
+varying vec3 world_position;
+void vertex(){world_position=(MODEL_MATRIX*vec4(VERTEX,1.)).xyz;}
 void fragment(){
- float fine=hash(floor(w.xz*32.));
- float patch=noise(w.xz*.35)*.6+noise(w.xz*1.2)*.4;
- // 화사하고 싱그러운 파스텔 잔디
- vec3 grass1=vec3(.26,.46,.18);
- vec3 grass2=vec3(.34,.57,.25);
- vec3 grass=mix(grass1,grass2,patch);
- grass+=(fine-.5)*vec3(.03,.03,.015);
- // 아기자기한 파스텔 들꽃 도트 (노란꽃, 분홍꽃, 흰꽃)
- float flower_seed=hash(floor(w.xz*12.));
- if(flower_seed>.985){
-  float fl=hash(floor(w.xz*12.)+vec2(3.1,7.4));
-  vec3 fcol=fl>.65?vec3(1.,.88,.32):fl>.32?vec3(1.,.62,.76):vec3(.98,.98,.95);
-  grass=mix(grass,fcol,.88);
- }
- float edge=min(abs(abs(w.x)-18.9),abs(abs(w.z)-11.45));
- float road=(1.-smoothstep(.64,.92+noise(w.xz*4.)*.2,edge))*step(abs(w.x),19.85)*step(abs(w.z),12.4);
- // 따뜻하고 달콤한 쿠키 모래길
- vec3 dirt1=vec3(.93,.84,.65);
- vec3 dirt2=vec3(.86,.75,.54);
- vec3 dirt=mix(dirt1,dirt2,noise(w.xz*2.2));dirt+=(fine-.5)*.025;
- ALBEDO=mix(grass,dirt,road);ROUGHNESS=.8;
+ vec2 p=world_position.xz;
+ float patches=sin(p.x*.24)*sin(p.y*.21)*.5+.5;
+ vec3 grass=mix(vec3(.57,.75,.42),vec3(.66,.81,.50),patches*.6);
+ // Soft rounded road follows the original rectangular enemy route.
+ vec2 q=abs(p)-vec2(17.4,9.95);
+ float distance_to_path=abs(length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-1.5);
+ float border=1.-smoothstep(.95,1.05,distance_to_path);
+ float road=1.-smoothstep(.76,.84,distance_to_path);
+ vec3 color=mix(grass,vec3(.74,.65,.43),border);
+ color=mix(color,vec3(.96,.87,.67),road);
+ ALBEDO=color;ROUGHNESS=1.;
 }
 """
 	var m:=ShaderMaterial.new();m.shader=shader;return m
-func prop(frame:int, pos:Vector3, height:float, flip:bool=false) -> void:
+func prop(frame:int, pos:Vector3, height:float, _flip:bool=false) -> void:
 	if frame>=4:
-		var rock:=V.sphere(world,height*.32,pos+Vector3(0,height*.16,0),V.material(Color("dedbd2"),0,.9));rock.scale=Vector3(1,.6,.85);return
-	var sprite:=Sprite3D.new();sprite.texture=OAK
-	sprite.pixel_size=height/(OAK.get_height()*.76);sprite.offset=Vector2(0,OAK.get_height()*.39)
-	sprite.position=pos;sprite.billboard=BaseMaterial3D.BILLBOARD_ENABLED;sprite.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	sprite.alpha_cut=SpriteBase3D.ALPHA_CUT_DISCARD;sprite.alpha_scissor_threshold=.4;sprite.alpha_antialiasing_mode=BaseMaterial3D.ALPHA_ANTIALIASING_ALPHA_TO_COVERAGE;sprite.alpha_antialiasing_edge=.65;sprite.shaded=false;sprite.flip_h=flip
-	sprite.modulate=Color(1.05,1.05,.98) if frame%2 else Color.WHITE;sprite.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;world.add_child(sprite)
+		var rock:=V.sphere(world,height*.32,pos+Vector3(0,height*.16,0),V.material(Color("bfd0c4"),0,1));rock.scale=Vector3(1,.65,.85)
+		return
+	# Rounded orchard trees belong to the same toy-like world as the chibi heroes.
+	var trunk:=V.material(Color("bc9069"),0,1)
+	var leaves:=V.material([Color("579b61"),Color("3f967a"),Color("d78da6")][frame%3],0,1)
+	V.cylinder(world,height*.065,height*.095,height*.55,pos+Vector3(0,height*.27,0),trunk,8)
+	for part in [Vector3(-.19,.65,0),Vector3(.19,.70,.04),Vector3(0,.87,-.03)]:
+		var canopy:=V.sphere(world,height*.30,pos+part*height,leaves);canopy.scale=Vector3(1,.88,1)
+func flowers(pos:Vector3, tint:Color) -> void:
+	var stem:=V.material(Color("7ba970"),0,1)
+	var bloom:=V.material(tint,0,1)
+	for i in range(3):
+		var point:=pos+Vector3((i-1)*.22,.12+float(i%2)*.08,0)
+		V.cylinder(world,.018,.025,.25,point,stem,5)
+		V.sphere(world,.10,point+Vector3(0,.16,0),bloom)
 func creek() -> void:
 	var curve:=Curve3D.new()
 	for i in range(7):
@@ -110,26 +104,29 @@ func creek() -> void:
 			var lift:=Vector3(0,.025 if not bank else 0,0)
 			for v in [a,c,b,b,c,d]:st.add_vertex(v+lift)
 		st.generate_normals()
-		var mat:=V.material(Color("d8cfbc") if bank else Color("48cae4"),.02,.3,.35 if not bank else 0.0)
+		var mat:=V.material(Color("f3e2b8") if bank else Color("83d8df"),.02,.3,.35 if not bank else 0.0)
 		mat.cull_mode=BaseMaterial3D.CULL_DISABLED;V.mesh(world,st.commit(),Vector3.ZERO,mat)
 func build_terrain() -> void:
-	var stone:=V.material(Color("e8e5dc"),0,.9);var dark:=V.material(Color("6a4c38"),0,.95)
-	var roof:=V.material(Color("e76f51"),0,.85);var wood:=V.material(Color("b07d62"),0,.9)
+	var stone:=V.material(Color("f1dfb7"),0,.9);var dark:=V.material(Color("b8ce9d"),0,.95)
+	var roof:=V.material(Color("dd8b76"),0,.85);var wood:=V.material(Color("c49b74"),0,.9)
 	V.box(world,Vector3(120,2.8,120),Vector3(0,-1.5,0),dark)
 	V.box(world,Vector3(120,.14,120),Vector3(0,-.07,0),grass_material())
-	# Mossy stone terrace layers, wooden watchtowers and Chinese tiled gate.
+	# Pastel orchard border, warm tiled gate and an uncluttered central meadow.
 	for side in [-1,1]:
-		V.box(world,Vector3(4,1.2,35),Vector3(side*23,-.1,0),stone)
+		V.box(world,Vector3(3,.35,35),Vector3(side*24,-.05,0),stone)
 		for z in range(-17,18,6):
 			if side<0 and abs(z)<4:continue
-			prop(0 if z%3 else 1,Vector3(side*(23.7+sin(z)*.8),.5,z),5.5+absf(sin(z))*1.3,z%2==0)
+			prop(0 if z%3 else 1,Vector3(side*(23.7+sin(z)*.8),.5,z),3.6+absf(sin(z))*.55,z%2==0)
 	for i in range(11):
 		var x:float=-27+i*5.3
-		prop(i%3,Vector3(x,.05,-18.5-sin(i)*.8),5.8+sin(i)*.6,i%2==0)
+		prop(i%3,Vector3(x,.05,-18.5-sin(i)*.8),3.9+sin(i)*.35,i%2==0)
 	for side in [-1,1]:
 		for x in range(-20,21,5):
 			if side>0 and abs(x)<12:continue
 			prop(4 if x%2 else 5,Vector3(x,.02,side*14),1.3+absf(x)*.025,x%2==0)
+	for i in range(12):
+		var side:float=-1.0 if i%2 else 1.0
+		flowers(Vector3(-19.8+float(i/2)*7.7,.03,side*13.4),[Color("ffe7a0"),Color("fff5df"),Color("f4b5c5")][i%3])
 	# A creek and small bridge on the inner meadow.
 	creek()
 	for i in range(8):V.box(world,Vector3(3,.12,.28),Vector3(8.8,.14,-1+i*.3),wood)
@@ -172,22 +169,22 @@ func build_terrain() -> void:
 			V.box(world,Vector3(.8,.15,.8),Vector3(x,1.48,z),roof)
 	var environment:=WorldEnvironment.new();var env:=Environment.new()
 	env.background_mode=Environment.BG_COLOR;env.background_color=Color("bde0fe")
-	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.ambient_light_color=Color("fff6ea");env.ambient_light_energy=.35
+	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.ambient_light_color=Color("fff6ea");env.ambient_light_energy=.32
 	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR;env.fog_enabled=false;env.fog_light_color=Color("bde0fe");env.fog_density=.001
 	environment.environment=env;world.add_child(environment)
-	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-55,-25,0);sun.light_color=Color("fff8ee");sun.light_energy=.65;sun.shadow_enabled=true;sun.directional_shadow_max_distance=80;world.add_child(sun)
+	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-55,-25,0);sun.light_color=Color("fff8ee");sun.light_energy=.6;sun.shadow_enabled=true;sun.directional_shadow_max_distance=80;world.add_child(sun)
 func build_headquarters(stone:Material, wood:Material, roof:Material) -> void:
 	var base:=to_world(game.HQ_POINT)
 	V.box(world,Vector3(4.2,.35,3.1),base+Vector3(0,.17,0),stone)
-	V.box(world,Vector3(3.6,1.75,2.6),base+Vector3(0,1.2,0),V.material(Color("b8a780"),0,1))
+	V.box(world,Vector3(3.6,1.75,2.6),base+Vector3(0,1.2,0),V.material(Color("f3dbb5"),0,1))
 	for x in [-1.65,1.65]:
 		for z in [-1.15,1.15]:V.box(world,Vector3(.17,2.45,.17),base+Vector3(x,1.45,z),wood)
 	V.box(world,Vector3(.9,1.65,.08),base+Vector3(0,1.1,1.34),wood)
 	for side in [-1,1]:
 		var tile:=V.box(world,Vector3(2.35,.22,3.2),base+Vector3(side*.95,2.55,0),roof);tile.rotation.z=side*.26
 	V.box(world,Vector3(.22,.25,3.5),base+Vector3(0,2.96,0),roof)
-	V.box(world,Vector3(1.4,.38,.1),base+Vector3(0,2.15,1.42),V.material(Color("5a372a"),0,1))
-	var sign:=Label3D.new();sign.text="본영 [U]";sign.font=game.FONT;sign.font_size=40;sign.pixel_size=.018;sign.position=base+Vector3(0,4.2,0);sign.billboard=BaseMaterial3D.BILLBOARD_ENABLED;sign.outline_size=9;sign.modulate=Color("ffd166");world.add_child(sign)
+	V.box(world,Vector3(1.4,.38,.1),base+Vector3(0,2.15,1.42),V.material(Color("b0785e"),0,1))
+	var sign:=Label3D.new();sign.text="업그레이드 [U]";sign.font=game.FONT;sign.font_size=40;sign.pixel_size=.018;sign.position=base+Vector3(0,4.2,0);sign.billboard=BaseMaterial3D.BILLBOARD_ENABLED;sign.outline_size=9;sign.modulate=Color("ffd166");world.add_child(sign)
 func headquarters_hit(screen:Vector2) -> bool:
 	var base:=to_world(game.HQ_POINT)
 	var first:=true;var bounds:=Rect2()
@@ -200,30 +197,31 @@ func headquarters_hit(screen:Vector2) -> bool:
 	return bounds.has_point(screen)
 func art_for(id:int) -> Array:
 	if id>=24:
-		var faction:int=(id-24)/6;var row:int=(id-24)%6
-		return [[BASE_SHU,BASE_WEI,BASE_WU][faction],row,6,["base-shu.png","base-wei.png","base-wu.png"][faction]]
+		var rows:Dictionary={24:0,25:1,26:3,30:1,31:2,32:3,36:0,37:2,38:1}
+		return [RECRUITS,rows.get(id,0),4,"chibi-recruits.png"]
 	match id:
-		0:return [SUPPORT,0,4,"commanders-support.png"]
+		0:return [HEROES,0,4,"chibi-heroes.png"]
 		1:return [ART,0,4,"commanders.png"]
-		2:return [SUPPORT,1,4,"commanders-support.png"]
+		2:return [HEROES,1,4,"chibi-heroes.png"]
 		3:return [ART,1,4,"commanders.png"]
-		4:return [SUPPORT,2,4,"commanders-support.png"]
-		5:return [SUPPORT,3,4,"commanders-support.png"]
-		6:return [LEGENDS,0,5,"commanders-legends.png"]
-		7:return [LEGENDS,1,5,"commanders-legends.png"]
+		4:return [COURT,0,5,"chibi-court.png"]
+		5:return [COURT,1,5,"chibi-court.png"]
+		6:return [COURT,2,5,"chibi-court.png"]
+		7:return [COURT,3,5,"chibi-court.png"]
 		8:return [ART,2,4,"commanders.png"]
-		9:return [LEGENDS,2,5,"commanders-legends.png"]
-		10:return [LEGENDS,3,5,"commanders-legends.png"]
-		11:return [LEGENDS,4,5,"commanders-legends.png"]
-		15:return [RECRUIT_SHU,0,3,"recruits-shu.png"]
-		16:return [RECRUIT_SHU,1,3,"recruits-shu.png"]
-		17:return [RECRUIT_SHU,2,3,"recruits-shu.png"]
-		18:return [RECRUIT_WEI,0,3,"recruits-wei.png"]
-		19:return [RECRUIT_WEI,1,3,"recruits-wei.png"]
-		20:return [RECRUIT_WEI,2,3,"recruits-wei.png"]
-		21:return [RECRUIT_WU,0,3,"recruits-wu.png"]
-		22:return [RECRUIT_WU,1,3,"recruits-wu.png"]
-		23:return [RECRUIT_WU,2,3,"recruits-wu.png"]
+		9:return [HEROES,2,4,"chibi-heroes.png"]
+		10:return [COURT,4,5,"chibi-court.png"]
+		11:return [GENERALS,0,5,"chibi-generals.png"]
+		15:return [HEROES,3,4,"chibi-heroes.png"]
+		16:return [GENERALS,1,5,"chibi-generals.png"]
+		17:return [GENERALS,2,5,"chibi-generals.png"]
+		18:return [GENERALS,3,5,"chibi-generals.png"]
+		19:return [GENERALS,4,5,"chibi-generals.png"]
+		20:return [VANGUARDS,0,5,"chibi-vanguards.png"]
+		21:return [VANGUARDS,1,5,"chibi-vanguards.png"]
+		22:return [VANGUARDS,2,5,"chibi-vanguards.png"]
+		23:return [VANGUARDS,3,5,"chibi-vanguards.png"]
+		-2:return [VANGUARDS,4,5,"chibi-vanguards.png"]
 	return [ART,3,4,"commanders.png"]
 func frame_meta(id:int, frame:int) -> Dictionary:
 	var art:=art_for(id)
@@ -290,6 +288,7 @@ func _process(dt:float) -> void:
 		var moving:bool=delta.length()>.002
 		var frame:int=3 if u.pulse>0 else [0,1,0,2][int(clock*8+key)%4] if moving else 0
 		pose_actor(a,u.id,frame,2.4 if u.rank==0 else 2.65,u.face<0)
+		a.sprite.modulate=[Color("e6ffe8"),Color("e1eeff"),Color("ffe7df")][R.data(u.id).faction] if u.rank==0 else Color.WHITE
 		if u.pulse>0:
 			a.sprite.position.y=.22;a.sprite.rotation.z=0.0
 		elif moving:
@@ -312,7 +311,7 @@ func _process(dt:float) -> void:
 		var a:Dictionary=foes[e.uid];var point:Vector2=game.path_pos(e.distance)
 		var pos:=to_world(point);var delta:Vector3=pos-a.last
 		a.root.position=pos;a.sprite.flip_h=delta.x<-.001 if absf(delta.x)>.001 else a.sprite.flip_h
-		pose_actor(a,-1,[0,1,0,2][int(clock*8+e.uid)%4],2.2,a.sprite.flip_h)
+		pose_actor(a,-2 if e.boss else -1,[0,1,0,2][int(clock*8+e.uid)%4],2.2,a.sprite.flip_h)
 		a.sprite.position.y=absf(sin(clock*12.0+e.uid))*.13
 		a.sprite.rotation.z=sin(clock*12.0+e.uid)*.07
 		a.root.scale=Vector3.ONE*(1.55 if e.boss else 1.1 if e.elite else .85)

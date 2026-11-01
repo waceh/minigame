@@ -4,7 +4,6 @@ const BASE_FONT = preload("res://font.ttf")
 const Headquarters = preload("res://scripts/headquarters.gd")
 const RecipeBook = preload("res://scripts/recipe_book.gd")
 const Minimap = preload("res://scripts/minimap.gd")
-const HUD_FRAME = preload("res://assets/hud-frame.png")
 const Selection = preload("res://scripts/selection.gd")
 const Battlefield = preload("res://scripts/battlefield.gd")
 var FONT:FontVariation=make_font()
@@ -374,7 +373,7 @@ func cancel_order() -> void:
 func begin_attack_order() -> void:
 	if paused or codex_open or state not in ["build","battle"] or selected_slots.is_empty():return
 	pending_order="attack";dragging=false;Input.set_default_cursor_shape(Input.CURSOR_CROSS)
-	announce("공격 명령 · 적 클릭: 집중 공격 / 지면 클릭: 공격 이동 / 우클릭·Esc: 취소")
+	announce("공격 명령 · 우클릭 적: 집중 공격 / 우클릭 지면: 공격 이동 / Esc: 취소")
 	refresh()
 func command_hold() -> void:
 	if paused or codex_open or state not in ["build","battle"]:return
@@ -475,12 +474,11 @@ func _unhandled_input(event:InputEvent) -> void:
 		if event.button_index==MOUSE_BUTTON_WHEEL_UP and event.pressed:battlefield.zoom=maxf(16,battlefield.zoom-2);battlefield.set_camera()
 		elif event.button_index==MOUSE_BUTTON_WHEEL_DOWN and event.pressed:battlefield.zoom=minf(42,battlefield.zoom+2);battlefield.set_camera()
 		elif event.button_index==MOUSE_BUTTON_RIGHT and event.pressed:
-			if pending_order!="":cancel_order();announce("공격 명령 취소")
-			else:command_at(event.position)
+			command_at(event.position,pending_order=="attack")
 			refresh()
 		elif event.button_index==MOUSE_BUTTON_LEFT:
 			if event.pressed:
-				if pending_order=="attack":command_at(event.position,true);dragging=false;refresh();get_viewport().set_input_as_handled();return
+				if pending_order!="":cancel_order()
 				if battlefield.headquarters_hit(event.position):open_headquarters();get_viewport().set_input_as_handled();return
 				if event.double_click and select_same_type(event.position):get_viewport().set_input_as_handled();return
 				dragging=true;drag_start=event.position;drag_now=event.position
@@ -519,9 +517,7 @@ func button_at(parent:Control, value:String, rect:Rect2, callback:Callable, acce
 func panel_at(parent:Control, rect:Rect2) -> Panel:
 	var p:=Panel.new();p.position=rect.position;p.size=rect.size;p.add_theme_stylebox_override("panel",style(Color("14213de8"),Color("457b9d"),12));parent.add_child(p);return p
 func stone_panel(rect:Rect2) -> Panel:
-	var p:=Panel.new();p.position=rect.position;p.size=rect.size;p.add_theme_stylebox_override("panel",style(Color("14213df4"),Color("3d5a80"),12));ui.add_child(p)
-	var frame:=NinePatchRect.new();frame.texture=HUD_FRAME;frame.size=rect.size*6;frame.scale=Vector2.ONE/6;frame.mouse_filter=Control.MOUSE_FILTER_IGNORE;frame.modulate=Color(1.1,1.1,1.15,.45)
-	frame.patch_margin_left=120;frame.patch_margin_top=120;frame.patch_margin_right=120;frame.patch_margin_bottom=120;p.add_child(frame)
+	var p:=Panel.new();p.position=rect.position;p.size=rect.size;p.add_theme_stylebox_override("panel",style(Color("1c3447f8"),Color("6a9b9d"),14));ui.add_child(p)
 	return p
 func portrait_for(id:int) -> AtlasTexture:
 	return battlefield.portrait_texture(id)
@@ -537,7 +533,7 @@ func build_ui() -> void:
 	pause_button=button_at(ui,"일시정지",Rect2(235,4,94,28),toggle_pause)
 	speed_button=button_at(ui,"속도 ×1",Rect2(335,4,86,28),func():speed=2 if speed==1 else 1;refresh())
 	pause_button.add_theme_font_size_override("font_size",14);speed_button.add_theme_font_size_override("font_size",14)
-	var attack_button:=button_at(ui,"A",Rect2(428,4,35,28),begin_attack_order);attack_button.tooltip_text="공격 [A] · 적 클릭: 집중 공격 / 지면 클릭: 공격 이동"
+	var attack_button:=button_at(ui,"A",Rect2(428,4,35,28),begin_attack_order);attack_button.tooltip_text="공격 [A] · 우클릭 적: 집중 공격 / 우클릭 지면: 공격 이동"
 	var hold_button:=button_at(ui,"H",Rect2(469,4,35,28),command_hold);hold_button.tooltip_text="위치 사수 [H] · 이동·추격 없이 사거리 안의 적만 공격"
 	summary=label_at(ui,"",Vector2(510,6),16,Color("e0e1dd"))
 	var round_panel:=panel_at(ui,Rect2(1036,49,228,84));round_panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -564,7 +560,7 @@ func build_ui() -> void:
 	recipe_button=button_at(command_panel,"도감 [Tab]\n전체 조합표",Rect2(347,16,104,80),open_book)
 	attack_cmd_button=button_at(command_panel,"공격 [A]\n집중/이동",Rect2(11,108,104,80),begin_attack_order)
 	hold_cmd_button=button_at(command_panel,"사수 [H]\n위치 고정",Rect2(123,108,104,80),command_hold)
-	upgrade_button=button_at(command_panel,"",Rect2(235,108,104,80),open_headquarters)
+	upgrade_button=button_at(command_panel,"",Rect2(235,108,104,80),open_headquarters,true)
 	wave_button=button_at(command_panel,"진격 [N]",Rect2(347,108,104,80),start_wave,true)
 	for button in [summon_button,merge_button,recipe_path_button,recipe_button,attack_cmd_button,hold_cmd_button,upgrade_button,wave_button]:
 		button.add_theme_font_size_override("font_size",14)
@@ -572,13 +568,13 @@ func build_ui() -> void:
 	headquarters=Headquarters.new();headquarters.game=self;ui.add_child(headquarters);headquarters.hide()
 	overlay=panel_at(ui,Rect2(280,225,720,365))
 	overlay_title=label_at(overlay,"난세의 수호자 · 삼국지 ORD",Vector2(34,28),36,Color("edcf92"))
-	overlay_body=label_at(overlay,"원피스 랜덤 디펜스(ORD) 감성을 담은 삼국지 RTS 디펜스입니다.\n\n[Space] 랜덤 장수 소환 → [M] 동일 3명 승급 → [R] 상위 조합 경로 탐색\n장수 클릭 · 드래그 부대 선택 · 우클릭 이동 · [A] 어택땅 / [H] 위치사수\n단축키: Space 소환 / M 승급 / R 조합법 / Tab 전체도감 / Del 판매\n30번의 진격 · 5진마다 적장 출현 · 성문 내구도 30",Vector2(36,95),17,Color("c7d3c8"))
+	overlay_body=label_at(overlay,"원피스 랜덤 디펜스(ORD) 감성을 담은 삼국지 RTS 디펜스입니다.\n\n[Space] 랜덤 장수 소환 → [M] 동일 3명 승급 → [R] 상위 조합 경로 탐색\n장수 클릭 · 드래그 부대 선택 · 우클릭 이동 · [A]+우클릭 공격 이동 / [H] 사수\n단축키: Space 소환 / M 승급 / R 조합법 / Tab 전체도감 / U 업그레이드 / Del 판매\n30번의 진격 · 5진마다 적장 출현 · 성문 내구도 30",Vector2(36,95),17,Color("c7d3c8"))
 	overlay_button=button_at(overlay,"출전 · 방어선 준비",Rect2(35,282,650,56),reset_game,true)
 func refresh() -> void:
 	if not summary:return
 	if headquarters.visible:headquarters.refresh()
 	var odds:=R.summon_odds(luck_level)
-	summon_button.tooltip_text="흔함 %.1f%% · 안흔함 %.1f%% · 특별함 %.1f%%\n본영 [U]에서 소환 확률 강화"%[odds[0]/100.0,odds[1]/100.0,odds[2]/100.0]
+	summon_button.tooltip_text="흔함 %.1f%% · 안흔함 %.1f%% · 특별함 %.1f%%\n업그레이드 [U]에서 소환 확률 강화"%[odds[0]/100.0,odds[1]/100.0,odds[2]/100.0]
 	var mob_count:int=enemies.size()+spawn_left
 	summary.text="💰 %d 금   🏰 성문 %d / 30   👥 병력 %d / 36   👾 몬스터: %d마리   🚩 제 %02d진 / 30"%[gold,maxi(0,lives),units.size(),mob_count,wave]
 	if mob_count>=45:
@@ -597,7 +593,8 @@ func refresh() -> void:
 	wave_button.text="전투 중\n남은 적 %d"%mob_count if state=="battle" else "다음 진격 [N]\n%d초"%int(ceil(break_time)) if break_time>0 else "진격 시작 [N]"
 	wave_button.disabled=state!="build" or paused
 	summon_button.disabled=gold<35 or empty_slot()<0 or paused or state not in ["build","battle"]
-	upgrade_button.text="본영 [U]\n공격·확률 강화"
+	upgrade_button.text="업그레이드\n공격 %d · 소환 %d\n[U] 강화 창"%[upgrade,luck_level]
+	upgrade_button.tooltip_text="전군 공격력 +%d%% · 소환 연구 %d/10\n클릭 또는 U키로 공격력·소환 확률 강화"%[upgrade*12,luck_level]
 	upgrade_button.disabled=paused or codex_open or state not in ["build","battle"]
 	selected_slots=selected_slots.filter(func(slot):return unit_at(slot)>=0)
 	var idx:=unit_at(selected)
@@ -641,5 +638,5 @@ func refresh() -> void:
 	if selected_slots.size()>1:detail.text="선택 %d명 · 더블클릭: 같은 장수 선택"%selected_slots.size();detail.add_theme_color_override("font_color",Color("f3f6f2"))
 	elif idx<0:
 		detail.add_theme_color_override("font_color",Color("f3f6f2"))
-		detail.text="Space 소환 · M 승급 · R 조합법\nTab 도감 · U 본영 강화 · Del 판매\nA+클릭 공격 · H 사수 · N 진격\n우클릭 이동 · 더블클릭 같은 장수\nCtrl+A 전군 선택 · 휠/방향키 시점"
-	tooltip.text="공격 명령 [A] · 적 클릭: 집중 공격 / 지면 클릭: 공격 이동 / 우클릭·Esc: 취소" if pending_order=="attack" else notice if notice_time>0 else "Space 소환 · M 승급 · R 조합법 · Tab 도감 · A 공격 · H 위치사수 · Del 판매 · 우클릭 이동"
+		detail.text="Space 소환 · M 승급 · R 조합법\nTab 도감 · U 업그레이드 · Del 판매\nA+우클릭 공격 이동 · H 사수\n좌클릭 선택 · 우클릭 이동\nCtrl+A 전군 선택 · 휠/방향키 시점"
+	tooltip.text="공격 명령 [A] · 우클릭: 집중 공격/공격 이동 · 좌클릭: 선택 · Esc: 취소" if pending_order=="attack" else notice if notice_time>0 else "Space 소환 · M 승급 · R 조합법 · U 업그레이드 · 좌클릭 선택 · 우클릭 이동"

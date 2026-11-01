@@ -12,7 +12,12 @@ func run_tests() -> void:
 	await process_frame;await process_frame
 	key(KEY_A);await process_frame
 	assert(game.pending_order=="attack" and game.selected_slots==[0])
+	var old_target:Vector2=game.units[0].target
 	await click(game.battlefield.screen_pos(Vector2(650,530)))
+	assert(game.units[0].target==old_target and not game.units[0].ordered,"left-click must never move a selected hero, even after A")
+	game.selected=0;game.selected_slots=[0]
+	key(KEY_A);await process_frame
+	await click(game.battlefield.screen_pos(Vector2(650,530)),MOUSE_BUTTON_RIGHT)
 	assert(game.pending_order=="" and game.units[0].order=="attack_move" and not game.dragging)
 	var destination:Vector2=game.units[0].target
 	# A-move interrupts travel to acquire and chase a nearby enemy.
@@ -24,9 +29,9 @@ func run_tests() -> void:
 	enemy.hp=0;var old_distance:float=game.units[0].pos.distance_to(destination)
 	game.move_army(.25)
 	assert(game.units[0].auto_enemy==-1 and game.units[0].pos.distance_to(destination)<old_distance)
-	# A + enemy click issues a specific attack, not a ground order.
+	# A + right-click enemy issues a specific attack, not a ground order.
 	enemy.hp=1000;key(KEY_A);await process_frame
-	await click(game.battlefield.screen_pos(game.path_pos(enemy.distance),.9))
+	await click(game.battlefield.screen_pos(game.path_pos(enemy.distance),.9),MOUSE_BUTTON_RIGHT)
 	assert(game.units[0].order=="attack" and game.units[0].focus_enemy==enemy.uid)
 	# H anchors the hero even if another body pushes against it, but allows attacks.
 	key(KEY_H);await process_frame
@@ -36,14 +41,15 @@ func run_tests() -> void:
 	game.move_army(.5);assert(game.units[0].pos==anchor)
 	game.units[0].pos=Vector2(184,252);game.command_hold();anchor=game.units[0].pos
 	var hp:float=enemy.hp;game.attack(game.units[0]);assert(enemy.hp<hp and game.units[0].pos==anchor)
-	# Move releases hold. Right-click and Esc cancel targeting without moving or pausing.
+	# Only right-click issues movement; Esc cancels attack targeting without pausing.
 	game.command_move(Vector2(500,500));assert(game.units[0].order=="move")
 	key(KEY_A);await process_frame;var target:Vector2=game.units[0].target
 	await click(game.battlefield.screen_pos(Vector2(600,550)),MOUSE_BUTTON_RIGHT)
-	assert(game.pending_order=="" and game.units[0].target==target)
+	assert(game.pending_order=="" and game.units[0].target!=target and game.units[0].order=="attack_move")
 	key(KEY_A);await process_frame;key(KEY_ESCAPE);await process_frame
 	assert(game.pending_order=="" and not game.paused)
 	key(KEY_A,true);await process_frame;assert(game.selected_slots.size()==2)
+	game.command_move(Vector2(500,500))
 	# Pausing prevents attack and hold orders.
 	game.paused=true;key(KEY_A);key(KEY_H);await process_frame
 	assert(game.pending_order=="" and game.units[0].order=="move")
