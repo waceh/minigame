@@ -38,7 +38,7 @@ func close_book() -> void:
 func reset_filters() -> void:
 	search.text="";rank_filter.select(0);faction_filter.select(0);ready_only.button_pressed=false;rebuild()
 func inspect(id:int) -> void:
-	mode=0;search.text=R.data(id).name;rank_filter.select(0);faction_filter.select(0);rebuild()
+	mode=0;search.text=R.data(id).name;rank_filter.select(0);faction_filter.select(0);ready_only.button_pressed=false;rebuild()
 func selected_count(id:int) -> int:
 	var count:=0
 	for u in game.units:
@@ -90,7 +90,7 @@ func add_hero(id:int) -> void:
 	var h:Dictionary=R.data(id);var row:=Panel.new();row.clip_contents=true;row.custom_minimum_size=Vector2(1005,93);row.add_theme_stylebox_override("panel",game.style(Color("1e293be0"),R.RANK_COLORS[h.rank].darkened(.25),10));list.add_child(row)
 	icon(row,id,Vector2(10,6),Vector2(66,79))
 	game.label_at(row,"%s · %s %s"%[R.RANKS[h.rank],R.FACTIONS[h.faction],h.name],Vector2(90,8),18,R.RANK_COLORS[h.rank])
-	game.label_at(row,"%s   /   공격력 %d · 간격 %.2f초   /   판매 %d금"%[h.role,int(h.damage),h.rate,R.sell_value(id)],Vector2(92,37),13,Color("ecf2ec"))
+	game.label_at(row,"%s   /   공격력 %d · 간격 %.2f초   /   표준 재료가치 %d금"%[h.role,int(h.damage),h.rate,R.material_cost(id)],Vector2(92,37),13,Color("ecf2ec"))
 	game.label_at(row,h.skill,Vector2(92,63),13,Color("d4e3d7"))
 	var show_button:Button=game.button_at(row,"획득 · 재료 경로",Rect2(818,24,174,44),inspect.bind(id));show_button.add_theme_font_size_override("font_size",16)
 func craft(index:int) -> void:

@@ -1,6 +1,7 @@
 extends Node2D
 const R = preload("res://scripts/roster.gd")
 const BASE_FONT = preload("res://font.ttf")
+const Headquarters = preload("res://scripts/headquarters.gd")
 const RecipeBook = preload("res://scripts/recipe_book.gd")
 const Minimap = preload("res://scripts/minimap.gd")
 const HUD_FRAME = preload("res://assets/hud-frame.png")
@@ -19,6 +20,7 @@ func make_font() -> FontVariation:
 const PATH = [Vector2(94,226),Vector2(850,226),Vector2(850,684),Vector2(94,684),Vector2(94,226)]
 const PATH_LENGTH = 2428.0
 const SUMMON_POINT = Vector2(472,500)
+const HQ_POINT = Vector2(40,455)
 const MAX_UNITS = 36
 var recipes:Array=R.all_recipes()
 var units:Array = []
@@ -30,6 +32,8 @@ var lives := 30
 var wave := 0
 var kills := 0
 var upgrade := 0
+var luck_level := 0
+var headquarters:Panel
 var state := "title"
 var paused := false
 var speed := 1
@@ -91,12 +95,12 @@ func empty_slot() -> int:
 		if unit_at(i)<0:return i
 	return -1
 func make_unit(id:int, _rank:int, slot:int) -> Dictionary:
-	return {"id":id,"rank":R.data(id).rank,"slot":slot,"cooldown":.2,"hits":0,"pulse":0.0,"pos":slot_pos(slot),"target":slot_pos(slot),"ordered":false,"face":1.0,"focus_enemy":-1,"auto_enemy":-1,"order":"guard"}
+	return {"id":id,"investment":R.material_cost(id),"rank":R.data(id).rank,"slot":slot,"cooldown":.2,"hits":0,"pulse":0.0,"pos":slot_pos(slot),"target":slot_pos(slot),"ordered":false,"face":1.0,"focus_enemy":-1,"auto_enemy":-1,"order":"guard"}
 func announce(message:String) -> void:
 	notice=message;notice_time=4
 func reset_game() -> void:
-	units.clear();enemies.clear();effects.clear();selected_slots.clear();selected=-1;gold=210;lives=30;wave=0;kills=0;upgrade=0
-	cancel_order();spawn_left=0;spawn_timer=0;break_time=0;paused=false;speed=1;state="build";codex_open=false;codex.hide();overlay.hide()
+	units.clear();enemies.clear();effects.clear();selected_slots.clear();selected=-1;gold=210;lives=30;wave=0;kills=0;upgrade=0;luck_level=0
+	cancel_order();spawn_left=0;spawn_timer=0;break_time=0;paused=false;speed=1;state="build";codex_open=false;codex.hide();headquarters.hide();overlay.hide()
 	announce("장수 6명 소환 → 드래그 부대 선택 → 우클릭 이동")
 	refresh()
 func summon_destination(slot:int) -> Vector2:
@@ -107,10 +111,11 @@ func summon() -> bool:
 	if gold<35:announce("소환에는 금화 35가 필요합니다.");return false
 	if slot<0:announce("진영이 가득 찼습니다. 장수를 조합해 자리를 만드세요.");return false
 	gold-=35
-	var id:int=R.SUMMON_IDS[rng.randi_range(0,R.SUMMON_IDS.size()-1)]
-	var rank:=0
+	var rank:int=R.summon_rank(rng.randi_range(0,9999),luck_level)
+	var pool:Array=R.SUMMON_POOLS[rank]
+	var id:int=pool[rng.randi_range(0,pool.size()-1)]
 	var summoned:=make_unit(id,rank,slot)
-	summoned.pos=SUMMON_POINT;summoned.target=summon_destination(slot);summoned.ordered=true;summoned.order="move"
+	summoned.investment=35;summoned.pos=SUMMON_POINT;summoned.target=summon_destination(slot);summoned.ordered=true;summoned.order="move"
 	units.append(summoned);selected=slot;selected_slots=[slot]
 	emit({"type":"summon","pos":SUMMON_POINT,"time":.65,"max":.65,"color":R.COLORS[R.data(id).faction]})
 	announce("%s · %s 합류! 같은 장수 3명으로 승급"%[R.RANKS[rank],R.data(id).name])
@@ -150,9 +155,11 @@ func consume_recipe(indices:Array, result_id:int, anchor_slot:int) -> bool:
 	if anchor_index<0 or not indices.has(anchor_index):return false
 	var source:Dictionary=units[anchor_index];var point:Vector2=source.pos
 	var original_name:String=R.data(source.id).name
+	var investment:=0
+	for i in indices:investment+=units[i].investment
 	indices.sort();indices.reverse()
 	for i in indices:units.remove_at(i)
-	var product:=make_unit(result_id,R.data(result_id).rank,anchor_slot);product.pos=point;product.target=point
+	var product:=make_unit(result_id,R.data(result_id).rank,anchor_slot);product.pos=point;product.target=point;product.investment=investment
 	if source.order=="hold":product.order="hold"
 	units.append(product);selected=anchor_slot;selected_slots=selected_slots.filter(func(slot):return unit_at(slot)>=0)
 	if not selected_slots.has(anchor_slot):selected_slots.append(anchor_slot)
@@ -173,18 +180,34 @@ func sell_selected() -> bool:
 	if paused or codex_open or state not in ["build","battle"] or not selected_slots.has(selected):return false
 	var index:=unit_at(selected)
 	if index<0:return false
-	var unit:Dictionary=units[index];var value:int=R.sell_value(unit.id)
+	var unit:Dictionary=units[index];var value:int=unit_sale_value(unit)
 	units.remove_at(index);gold+=value;selected_slots.erase(selected)
 	selected=selected_slots[0] if not selected_slots.is_empty() else -1
-	cancel_order();announce("%s 1명 판매 · +%d 금 (재료 가치의 70%%)"%[R.data(unit.id).name,value]);refresh();return true
+	cancel_order();announce("%s 1명 판매 · +%d 금 (투입 금화의 70%%)"%[R.data(unit.id).name,value]);refresh();return true
 func inspect_selected() -> void:
 	var idx:=unit_at(selected)
 	if idx>=0:
-		cancel_order();dragging=false;codex_open=true;codex.inspect(units[idx].id);refresh()
+		cancel_order();dragging=false;codex_open=true;headquarters.hide();codex.inspect(units[idx].id);codex.open();refresh()
 	else:
 		open_book()
 func open_book() -> void:
-	cancel_order();dragging=false;codex_open=true;codex.open();refresh()
+	cancel_order();dragging=false;codex_open=true;headquarters.hide();codex.open();refresh()
+func unit_sale_value(unit:Dictionary) -> int:
+	return int(floor(unit.investment*.7))
+func open_headquarters() -> void:
+	if state not in ["build","battle"]:return
+	cancel_order();dragging=false;codex.hide();codex_open=true;headquarters.open();refresh()
+func close_modals() -> void:
+	codex_open=false;codex.hide();headquarters.hide();refresh()
+func luck_cost() -> int:
+	return 60+luck_level*40
+func train_luck() -> bool:
+	if paused or state not in ["build","battle"] or luck_level>=R.MAX_LUCK_LEVEL:return false
+	var cost:=luck_cost()
+	if gold<cost:announce("소환 확률 강화에 %d금이 필요합니다."%cost);return false
+	gold-=cost;luck_level+=1
+	var odds:=R.summon_odds(luck_level)
+	announce("소환 연구 %d단계 · 안흔함 %.1f%% · 특별함 %.1f%%"%[luck_level,odds[1]/100.0,odds[2]/100.0]);refresh();return true
 func train_army() -> bool:
 	if paused or state not in ["build","battle"] or upgrade>=10:return false
 	var cost:=80+upgrade*55
@@ -289,7 +312,7 @@ func end_game(won:bool) -> void:
 func toggle_pause() -> void:
 	if state in ["build","battle"]:cancel_order();paused=not paused;refresh();queue_redraw()
 func _notification(what:int) -> void:
-	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and state in ["build","battle"]:cancel_order();paused=true;refresh()
+	if what==NOTIFICATION_APPLICATION_FOCUS_OUT and state in ["build","battle"]:cancel_order();dragging=false;paused=true;refresh()
 func emit(effect:Dictionary) -> void:
 	effects.append(effect)
 	if battlefield:battlefield.emit_effect(effect)
@@ -413,11 +436,17 @@ func select_at(screen:Vector2, additive:bool=false) -> void:
 		if not additive:selected_slots=[slot]
 		elif selected_slots.has(slot):selected_slots.erase(slot)
 		else:selected_slots.append(slot)
-	else:command_at(screen)
+	else:
+		selected=-1;selected_slots.clear()
 	refresh();queue_redraw()
+func _input(event:InputEvent) -> void:
+	if not dragging or not event is InputEventMouseButton:return
+	if event.button_index!=MOUSE_BUTTON_LEFT or event.pressed:return
+	if not Rect2(battlefield.position,battlefield.size).has_point(event.position):
+		dragging=false;refresh();queue_redraw();get_viewport().set_input_as_handled()
 func _unhandled_input(event:InputEvent) -> void:
 	if codex_open:
-		if event is InputEventKey and event.pressed and event.physical_keycode==KEY_ESCAPE:codex_open=false;codex.hide()
+		if event is InputEventKey and event.pressed and event.physical_keycode==KEY_ESCAPE:close_modals()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
@@ -426,7 +455,7 @@ func _unhandled_input(event:InputEvent) -> void:
 			KEY_DELETE, KEY_BACKSPACE:sell_selected()
 			KEY_N:start_wave()
 			KEY_R:inspect_selected()
-			KEY_U:train_army()
+			KEY_U:open_headquarters()
 			KEY_TAB, KEY_F8:open_book()
 			KEY_ESCAPE:
 				if pending_order!="":cancel_order();announce("공격 명령 취소");refresh()
@@ -452,6 +481,7 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif event.button_index==MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				if pending_order=="attack":command_at(event.position,true);dragging=false;refresh();get_viewport().set_input_as_handled();return
+				if battlefield.headquarters_hit(event.position):open_headquarters();get_viewport().set_input_as_handled();return
 				if event.double_click and select_same_type(event.position):get_viewport().set_input_as_handled();return
 				dragging=true;drag_start=event.position;drag_now=event.position
 			elif dragging:
@@ -534,17 +564,21 @@ func build_ui() -> void:
 	recipe_button=button_at(command_panel,"도감 [Tab]\n전체 조합표",Rect2(347,16,104,80),open_book)
 	attack_cmd_button=button_at(command_panel,"공격 [A]\n집중/이동",Rect2(11,108,104,80),begin_attack_order)
 	hold_cmd_button=button_at(command_panel,"사수 [H]\n위치 고정",Rect2(123,108,104,80),command_hold)
-	upgrade_button=button_at(command_panel,"",Rect2(235,108,104,80),train_army)
+	upgrade_button=button_at(command_panel,"",Rect2(235,108,104,80),open_headquarters)
 	wave_button=button_at(command_panel,"진격 [N]",Rect2(347,108,104,80),start_wave,true)
 	for button in [summon_button,merge_button,recipe_path_button,recipe_button,attack_cmd_button,hold_cmd_button,upgrade_button,wave_button]:
 		button.add_theme_font_size_override("font_size",14)
 	codex=RecipeBook.new();codex.game=self;ui.add_child(codex);codex.hide()
+	headquarters=Headquarters.new();headquarters.game=self;ui.add_child(headquarters);headquarters.hide()
 	overlay=panel_at(ui,Rect2(280,225,720,365))
 	overlay_title=label_at(overlay,"난세의 수호자 · 삼국지 ORD",Vector2(34,28),36,Color("edcf92"))
 	overlay_body=label_at(overlay,"원피스 랜덤 디펜스(ORD) 감성을 담은 삼국지 RTS 디펜스입니다.\n\n[Space] 랜덤 장수 소환 → [M] 동일 3명 승급 → [R] 상위 조합 경로 탐색\n장수 클릭 · 드래그 부대 선택 · 우클릭 이동 · [A] 어택땅 / [H] 위치사수\n단축키: Space 소환 / M 승급 / R 조합법 / Tab 전체도감 / Del 판매\n30번의 진격 · 5진마다 적장 출현 · 성문 내구도 30",Vector2(36,95),17,Color("c7d3c8"))
 	overlay_button=button_at(overlay,"출전 · 방어선 준비",Rect2(35,282,650,56),reset_game,true)
 func refresh() -> void:
 	if not summary:return
+	if headquarters.visible:headquarters.refresh()
+	var odds:=R.summon_odds(luck_level)
+	summon_button.tooltip_text="흔함 %.1f%% · 안흔함 %.1f%% · 특별함 %.1f%%\n본영 [U]에서 소환 확률 강화"%[odds[0]/100.0,odds[1]/100.0,odds[2]/100.0]
 	var mob_count:int=enemies.size()+spawn_left
 	summary.text="💰 %d 금   🏰 성문 %d / 30   👥 병력 %d / 36   👾 몬스터: %d마리   🚩 제 %02d진 / 30"%[gold,maxi(0,lives),units.size(),mob_count,wave]
 	if mob_count>=45:
@@ -563,19 +597,18 @@ func refresh() -> void:
 	wave_button.text="전투 중\n남은 적 %d"%mob_count if state=="battle" else "다음 진격 [N]\n%d초"%int(ceil(break_time)) if break_time>0 else "진격 시작 [N]"
 	wave_button.disabled=state!="build" or paused
 	summon_button.disabled=gold<35 or empty_slot()<0 or paused or state not in ["build","battle"]
-	upgrade_button.text="전군 훈련 %d/10\n%d 금"%[upgrade,80+upgrade*55] if upgrade<10 else "전군 훈련 완료\n+120%"
-	upgrade_button.disabled=gold<80+upgrade*55 or upgrade>=10 or paused
+	upgrade_button.text="본영 [U]\n공격·확률 강화"
+	upgrade_button.disabled=paused or codex_open or state not in ["build","battle"]
 	selected_slots=selected_slots.filter(func(slot):return unit_at(slot)>=0)
 	var idx:=unit_at(selected)
 	merge_button.disabled=true
 	if idx>=0:
 		var u:Dictionary=units[idx];var h:Dictionary=R.data(u.id);var stats:=R.stats(u,upgrade)
 		var bonus_dmg:int=int(stats.damage-h.damage)
-		detail.text="👑 [%s] %s · %s (%s)\n⚔️ 공격력 %d (+%d)  🎯 사거리 %d  ⏱️ 공속 %.2f초\n🛡️ 명령: %s  |  🌟 %s\n📦 승급 현황: 동일 장수 %d / 3명 (M: 승급 / R: 조합 경로)"%[
+		detail.text="[%s] %s · %s\n%s · 명령: %s\n공격 %d (+%d) · 사거리 %d · %.2f초\n%s\n선택 재료 %d/3 · M 승급 / R 조합법"%[
 			R.FACTIONS[h.faction],h.name,R.RANKS[u.rank],h.role,
-			int(stats.damage),bonus_dmg,int(48 if stats.kind in ["melee","cleave","stun"] else stats.range),stats.rate,
 			{"guard":"경계","move":"이동","attack":"집중 공격","attack_move":"공격 이동","hold":"위치 사수"}.get(u.order,"경계"),
-			h.skill,matching_indices(u,true).size()
+			int(stats.damage),bonus_dmg,int(48 if stats.kind in ["melee","cleave","stun"] else stats.range),stats.rate,h.skill,matching_indices(u,true).size()
 		]
 		detail.add_theme_color_override("font_color",R.RANK_COLORS[u.rank])
 	else:
@@ -591,8 +624,8 @@ func refresh() -> void:
 	else:merge_button.text="승급 [M]\n같은 등급 3명"
 	recipe_path_button.disabled=idx<0 or paused or codex_open
 	sell_button.disabled=idx<0 or not selected_slots.has(selected) or paused or codex_open or state not in ["build","battle"]
-	sell_button.text="판매 +%d 금"%R.sell_value(units[idx].id) if idx>=0 else "선택 후 판매"
-	sell_button.tooltip_text="현재 대표 선택 장수 1명 판매 [Delete]"
+	sell_button.text="판매 +%d 금"%unit_sale_value(units[idx]) if idx>=0 else "선택 후 판매"
+	sell_button.tooltip_text="대표 선택 장수 1명 · 실제 투입 금화의 70% 환급 [Delete]"
 	portrait.visible=idx>=0
 	portrait_name.text=R.data(units[idx].id).name if idx>=0 else "장수 선택"
 	portrait_name.add_theme_color_override("font_color",R.RANK_COLORS[units[idx].rank] if idx>=0 else Color("f3f6f2"))
@@ -605,8 +638,8 @@ func refresh() -> void:
 				var member:Dictionary=units[unit_index]
 				squad_icons[i].get_child(0).texture=portrait_for(member.id)
 				squad_icons[i].tooltip_text="%s · %s"%[R.data(member.id).name,R.RANKS[member.rank]]
-	if selected_slots.size()>1:detail.text="선택 부대 %d명 · 더블클릭: 동일 장수 전체 선택\nA: 공격 이동 · H: 위치 사수 · M: 승급"%selected_slots.size();detail.add_theme_color_override("font_color",Color("f3f6f2"))
+	if selected_slots.size()>1:detail.text="선택 %d명 · 더블클릭: 같은 장수 선택"%selected_slots.size();detail.add_theme_color_override("font_color",Color("f3f6f2"))
 	elif idx<0:
 		detail.add_theme_color_override("font_color",Color("f3f6f2"))
-		detail.text="[원랜디 스타일 삼국지 RTS 디펜스]\nSpace 소환 · M 승급 · R 조합 경로 · Tab 전체 도감\nA+클릭: 집중 공격 / 어택땅 · H: 위치 사수\n우클릭 이동 · Del 장수 판매 · N 다음 웨이브\n더블클릭: 동일 장수 전체 선택 · Ctrl+A: 전군 선택"
+		detail.text="Space 소환 · M 승급 · R 조합법\nTab 도감 · U 본영 강화 · Del 판매\nA+클릭 공격 · H 사수 · N 진격\n우클릭 이동 · 더블클릭 같은 장수\nCtrl+A 전군 선택 · 휠/방향키 시점"
 	tooltip.text="공격 명령 [A] · 적 클릭: 집중 공격 / 지면 클릭: 공격 이동 / 우클릭·Esc: 취소" if pending_order=="attack" else notice if notice_time>0 else "Space 소환 · M 승급 · R 조합법 · Tab 도감 · A 공격 · H 위치사수 · Del 판매 · 우클릭 이동"

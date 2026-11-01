@@ -10,6 +10,12 @@ func run_tests() -> void:
 	var point:Vector2=game.battlefield.screen_pos(game.units[0].pos,1.1)
 	mouse(point,true);await process_frame;mouse(point,false);await process_frame
 	assert(game.selected==0 and game.selected_slots==[0],"unit click must reach world input")
+	var unchanged:Vector2=game.units[0].target
+	var empty_ground:Vector2=game.battlefield.screen_pos(Vector2(650,580))
+	mouse(empty_ground,true);await process_frame;mouse(empty_ground,false);await process_frame
+	assert(game.units[0].target==unchanged and not game.units[0].ordered and game.selected_slots.is_empty(),"plain left-click ground must deselect without moving")
+	mouse(point,true);await process_frame;mouse(point,false);await process_frame
+	assert(game.selected_slots==[0])
 	var goal:Vector2=game.battlefield.screen_pos(Vector2(580,550))
 	mouse(goal,true,MOUSE_BUTTON_RIGHT);mouse(goal,false,MOUSE_BUTTON_RIGHT);await process_frame
 	assert(game.units[0].ordered and game.units[0].target.distance_to(Vector2(580,550))<1)
@@ -44,9 +50,15 @@ func run_tests() -> void:
 	var old_target:Vector2=game.units[0].target
 	mouse(game.minimap.global_position+Vector2(180,145),true);await process_frame;mouse(game.minimap.global_position+Vector2(180,145),false);await process_frame
 	assert(game.battlefield.focus.length()>1 and game.units[0].target==old_target)
+	# Releasing a world drag over the HUD must not leave selection dragging stuck.
+	game.codex_open=false
+	mouse(Vector2(500,180),true);await process_frame
+	assert(game.dragging)
+	mouse(Vector2(1279,700),false);await process_frame
+	assert(not game.dragging)
 	# Opening the codex suspends shortcuts until it is closed.
 	game.codex_open=true;var count:int=game.units.size()
 	var key:=InputEventKey.new();key.pressed=true;key.physical_keycode=KEY_SPACE;Input.parse_input_event(key);await process_frame
 	assert(game.units.size()==count)
-	game.free();print("threekingdoms controls: PASS — engine-dispatched selection, right-click movement, drag selection, focus fire, double-click same hero across positions, pause, codex")
+	game.free();print("threekingdoms controls: PASS — engine-dispatched selection, left-click deselect without moving, right-click movement, drag selection, focus fire, double-click same hero across positions, pause, codex")
 	quit()

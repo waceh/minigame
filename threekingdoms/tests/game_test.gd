@@ -9,7 +9,7 @@ func run_tests() -> void:
 		for frame in range(4):
 			var data:Dictionary=game.battlefield.frame_meta(id,frame);var r:Array=data.rect
 			assert(r[0]>=0 and r[1]>=0 and r[2]>0 and r[3]>0 and r[0]+r[2]<=art[0].get_width() and r[1]+r[3]<=art[0].get_height())
-	assert(names.size()==39 and tiers==[18,9,6,3,3] and game.recipes.size()==63)
+	assert(names.size()==30 and tiers==[9,9,6,3,3] and game.recipes.size()==54)
 	for i in range(5):
 		for recipe in game.recipes:
 			var all_ready:=true;var cost:=0
@@ -18,10 +18,10 @@ func run_tests() -> void:
 				all_ready=all_ready and reachable.has(material[0]);cost+=game.R.material_cost(material[0])*material[1]
 			assert(game.R.sell_value(recipe.result)<cost,"craft/sell must not create money")
 			if all_ready and not reachable.has(recipe.result):reachable.append(recipe.result)
-	assert(reachable.size()==39)
+	assert(reachable.size()==30)
 	game.rng.seed=712
 	for i in range(6):
-		assert(game.summon());assert(game.units[-1].pos==game.SUMMON_POINT and game.units[-1].rank==0)
+		assert(game.summon());assert(game.units[-1].pos==game.SUMMON_POINT and game.units[-1].rank<=2 and game.R.SUMMON_POOLS[game.units[-1].rank].has(game.units[-1].id))
 		assert(game.units[-1].target.distance_to(game.SUMMON_POINT)<100)
 	assert(game.gold==0 and not game.summon());game.step(2)
 	for u in game.units:assert(u.pos.distance_to(game.SUMMON_POINT)<110)
@@ -46,4 +46,4 @@ func run_tests() -> void:
 		assert(game.state in ["build","won"])
 	assert(game.state=="won" and game.wave==30)
 	game.reset_game();game.state="battle";game.lives=0;game.step(.01);assert(game.state=="lost")
-	game.free();print("game: PASS — 39 unique tier-specific heroes, 63 reachable recipes, no sell arbitrage, atlas bounds, fixed camp, economy, roles, bosses, 30-wave victory/defeat");quit()
+	game.free();print("game: PASS — 30 unique tier-specific heroes, 9 common heroes, 54 reachable recipes, no sell arbitrage, atlas bounds, fixed camp, economy, roles, bosses, 30-wave victory/defeat");quit()

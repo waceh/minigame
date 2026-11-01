@@ -25,33 +25,26 @@ const DATA = {
 	24: {"name": "관평", "faction": 0, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
 	25: {"name": "주창", "faction": 0, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
 	26: {"name": "미축", "faction": 0, "rank": 0, "role": "책사", "kind": "slow", "damage": 10.0, "rate": 1.0, "range": 165.0, "skill": "견제 · 적 이동 속도 35% 감소"},
-	27: {"name": "간옹", "faction": 0, "rank": 0, "role": "책사", "kind": "slow", "damage": 10.0, "rate": 1.0, "range": 165.0, "skill": "견제 · 적 이동 속도 35% 감소"},
-	28: {"name": "요화", "faction": 0, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
-	29: {"name": "마대", "faction": 0, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
 	30: {"name": "조홍", "faction": 1, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
 	31: {"name": "이전", "faction": 1, "rank": 0, "role": "궁병", "kind": "rapid", "damage": 11.0, "rate": 0.68, "range": 180.0, "skill": "사격 · 빠른 원거리 공격"},
 	32: {"name": "악진", "faction": 1, "rank": 0, "role": "책사", "kind": "slow", "damage": 10.0, "rate": 1.0, "range": 165.0, "skill": "견제 · 적 이동 속도 35% 감소"},
-	33: {"name": "우금", "faction": 1, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
-	34: {"name": "문빙", "faction": 1, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
-	35: {"name": "만총", "faction": 1, "rank": 0, "role": "책사", "kind": "slow", "damage": 10.0, "rate": 1.0, "range": 165.0, "skill": "견제 · 적 이동 속도 35% 감소"},
 	36: {"name": "주태", "faction": 2, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
 	37: {"name": "한당", "faction": 2, "rank": 0, "role": "궁병", "kind": "rapid", "damage": 11.0, "rate": 0.68, "range": 180.0, "skill": "사격 · 빠른 원거리 공격"},
 	38: {"name": "정보", "faction": 2, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
-	39: {"name": "서성", "faction": 2, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
-	40: {"name": "반장", "faction": 2, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
-	41: {"name": "진무", "faction": 2, "rank": 0, "role": "보조 무장", "kind": "melee", "damage": 17.0, "rate": 1.0, "range": 130.0, "skill": "근접전 · 단일 대상 공격"},
 }
 const FACTIONS = ["촉", "위", "오"]
 const COLORS = [Color("72bc96"), Color("82a9de"), Color("ed9a75")]
-const RANKS = ["흔함", "안흔함", "희귀", "전설", "신화"]
+const RANKS = ["흔함", "안흔함", "특별함", "전설", "신화"]
 const RANK_COLORS = [Color("f8f9fa"), Color("52b788"), Color("48cae4"), Color("c77dff"), Color("ffb703")]
-const SUMMON_IDS = [24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41]
-const PROMOTIONS = {24: 16, 25: 16, 26: 17, 27: 17, 28: 2, 29: 2, 30: 4, 31: 4, 32: 19, 33: 19, 34: 20, 35: 20, 36: 21, 37: 21, 38: 22, 39: 22, 40: 23, 41: 23, 16: 0, 17: 1, 2: 1, 4: 3, 19: 18, 20: 18, 21: 6, 22: 7, 23: 7}
+const SUMMON_IDS = [24,25,26,30,31,32,36,37,38]
+const SUMMON_POOLS = [[24,25,26,30,31,32,36,37,38],[2,4,16,17,19,20,21,22,23],[0,1,3,6,7,18]]
+const MAX_LUCK_LEVEL = 10
+const PROMOTIONS = {24:16,25:17,26:2,30:4,31:19,32:20,36:21,37:22,38:23,16:0,17:1,2:1,4:3,19:18,20:18,21:6,22:7,23:7}
 const CRAFTS = [
 	{"result":9,"materials":[[0,1],[1,1]]},
 	{"result":10,"materials":[[3,1],[18,1]]},
 	{"result":11,"materials":[[6,1],[7,1]]},
-	{"result":15,"materials":[[9,1],[0,1],[16,2],[29,1]]},
+	{"result":15,"materials":[[9,1],[0,1],[16,2],[26,1]]},
 	{"result":5,"materials":[[10,1],[3,1],[4,2],[30,1]]},
 	{"result":8,"materials":[[11,1],[6,1],[22,2],[36,1]]},
 ]
@@ -61,7 +54,7 @@ static func all_recipes() -> Array:
 		result.append({"result":PROMOTIONS[id],"materials":[[id,3]],"type":"승급"})
 	for start in [24,30,36]:
 		for pair in range(3):
-			var a:int=start+pair*2;var b:int=a+1
+			var a:int=start+pair;var b:int=start+(pair+1)%3
 			result.append({"result":PROMOTIONS[a],"materials":[[a,2],[b,1]],"type":"혼합"})
 			result.append({"result":PROMOTIONS[b],"materials":[[a,1],[b,2]],"type":"혼합"})
 	for recipe in [
@@ -72,14 +65,22 @@ static func all_recipes() -> Array:
 		{"result":6,"materials":[[21,1],[22,1],[36,2]]},
 		{"result":7,"materials":[[23,1],[22,1],[37,2]]},
 		{"result":9,"materials":[[0,1],[17,2],[26,1]]},
-		{"result":10,"materials":[[3,1],[19,2],[35,1]]},
-		{"result":11,"materials":[[6,1],[21,2],[41,1]]},
+		{"result":10,"materials":[[3,1],[19,2],[32,1]]},
+		{"result":11,"materials":[[6,1],[21,2],[38,1]]},
 		{"result":15,"materials":[[9,1],[1,1],[17,1],[2,1],[24,1]]},
-		{"result":5,"materials":[[10,1],[18,1],[19,1],[20,1],[35,1]]},
-		{"result":8,"materials":[[11,1],[7,1],[21,1],[23,1],[41,1]]}
+		{"result":5,"materials":[[10,1],[18,1],[19,1],[20,1],[32,1]]},
+		{"result":8,"materials":[[11,1],[7,1],[21,1],[23,1],[38,1]]}
 	]:result.append(recipe)
 	result.append_array(CRAFTS)
 	return result
+static func summon_odds(luck_level:int=0) -> Array:
+	var level:=clampi(luck_level,0,MAX_LUCK_LEVEL)
+	return [8000-level*130,1700+level*100,300+level*30]
+static func summon_rank(roll:int, luck_level:int=0) -> int:
+	var odds:=summon_odds(luck_level)
+	if roll<odds[0]:return 0
+	if roll<odds[0]+odds[1]:return 1
+	return 2
 static func data(id:int) -> Dictionary:
 	return DATA[id]
 static func stats(unit:Dictionary, upgrade:int) -> Dictionary:

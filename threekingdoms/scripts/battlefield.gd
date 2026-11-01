@@ -27,6 +27,7 @@ var focus:=Vector3.ZERO
 var atlas_cache:Dictionary={}
 var ribbon_material:StandardMaterial3D
 var attack_clock:=0.0
+var hq_bounds:=Rect2()
 func _ready() -> void:
 	position=Vector2(0,36);size=Vector2(1280,560);mouse_filter=Control.MOUSE_FILTER_IGNORE
 	viewport=SubViewport.new();viewport.size=Vector2i(1280,560);viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS;viewport.handle_input_locally=false
@@ -64,13 +65,13 @@ void fragment(){
  float fine=hash(floor(w.xz*32.));
  float patch=noise(w.xz*.35)*.6+noise(w.xz*1.2)*.4;
  // 화사하고 싱그러운 파스텔 잔디
- vec3 grass1=vec3(.42,.78,.32);
- vec3 grass2=vec3(.55,.86,.40);
+ vec3 grass1=vec3(.26,.46,.18);
+ vec3 grass2=vec3(.34,.57,.25);
  vec3 grass=mix(grass1,grass2,patch);
  grass+=(fine-.5)*vec3(.03,.03,.015);
  // 아기자기한 파스텔 들꽃 도트 (노란꽃, 분홍꽃, 흰꽃)
  float flower_seed=hash(floor(w.xz*12.));
- if(flower_seed>.93){
+ if(flower_seed>.985){
   float fl=hash(floor(w.xz*12.)+vec2(3.1,7.4));
   vec3 fcol=fl>.65?vec3(1.,.88,.32):fl>.32?vec3(1.,.62,.76):vec3(.98,.98,.95);
   grass=mix(grass,fcol,.88);
@@ -119,7 +120,9 @@ func build_terrain() -> void:
 	# Mossy stone terrace layers, wooden watchtowers and Chinese tiled gate.
 	for side in [-1,1]:
 		V.box(world,Vector3(4,1.2,35),Vector3(side*23,-.1,0),stone)
-		for z in range(-17,18,6):prop(0 if z%3 else 1,Vector3(side*(23.7+sin(z)*.8),.5,z),5.5+absf(sin(z))*1.3,z%2==0)
+		for z in range(-17,18,6):
+			if side<0 and abs(z)<4:continue
+			prop(0 if z%3 else 1,Vector3(side*(23.7+sin(z)*.8),.5,z),5.5+absf(sin(z))*1.3,z%2==0)
 	for i in range(11):
 		var x:float=-27+i*5.3
 		prop(i%3,Vector3(x,.05,-18.5-sin(i)*.8),5.8+sin(i)*.6,i%2==0)
@@ -141,6 +144,7 @@ func build_terrain() -> void:
 		var tile:=V.box(world,Vector3(.18,.025,.07),camp+Vector3(cos(angle),0,sin(angle))*.99,camp_mat);tile.rotation.y=-angle
 	var sign:=Label3D.new();sign.text="소환진";sign.font=game.FONT;sign.font_size=36;sign.pixel_size=.014;sign.position=camp+Vector3(0,.15,1.25);sign.billboard=BaseMaterial3D.BILLBOARD_ENABLED;sign.modulate=Color("fff3b0");sign.outline_size=6;sign.outline_modulate=Color("7f5539");world.add_child(sign)
 	# Gate at the route start; open center remains passable.
+	build_headquarters(stone,wood,roof)
 	var gate:=to_world(Vector2(94,226))
 	for x in [-1.8,1.8]:
 		V.box(world,Vector3(1.4,3.5,1.4),gate+Vector3(x,1.75,0),stone)
@@ -168,10 +172,32 @@ func build_terrain() -> void:
 			V.box(world,Vector3(.8,.15,.8),Vector3(x,1.48,z),roof)
 	var environment:=WorldEnvironment.new();var env:=Environment.new()
 	env.background_mode=Environment.BG_COLOR;env.background_color=Color("bde0fe")
-	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.ambient_light_color=Color("fff6ea");env.ambient_light_energy=.9
+	env.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.ambient_light_color=Color("fff6ea");env.ambient_light_energy=.35
 	env.tonemap_mode=Environment.TONE_MAPPER_LINEAR;env.fog_enabled=false;env.fog_light_color=Color("bde0fe");env.fog_density=.001
 	environment.environment=env;world.add_child(environment)
-	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-55,-25,0);sun.light_color=Color("fff8ee");sun.light_energy=1.15;sun.shadow_enabled=true;sun.directional_shadow_max_distance=80;world.add_child(sun)
+	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-55,-25,0);sun.light_color=Color("fff8ee");sun.light_energy=.65;sun.shadow_enabled=true;sun.directional_shadow_max_distance=80;world.add_child(sun)
+func build_headquarters(stone:Material, wood:Material, roof:Material) -> void:
+	var base:=to_world(game.HQ_POINT)
+	V.box(world,Vector3(4.2,.35,3.1),base+Vector3(0,.17,0),stone)
+	V.box(world,Vector3(3.6,1.75,2.6),base+Vector3(0,1.2,0),V.material(Color("b8a780"),0,1))
+	for x in [-1.65,1.65]:
+		for z in [-1.15,1.15]:V.box(world,Vector3(.17,2.45,.17),base+Vector3(x,1.45,z),wood)
+	V.box(world,Vector3(.9,1.65,.08),base+Vector3(0,1.1,1.34),wood)
+	for side in [-1,1]:
+		var tile:=V.box(world,Vector3(2.35,.22,3.2),base+Vector3(side*.95,2.55,0),roof);tile.rotation.z=side*.26
+	V.box(world,Vector3(.22,.25,3.5),base+Vector3(0,2.96,0),roof)
+	V.box(world,Vector3(1.4,.38,.1),base+Vector3(0,2.15,1.42),V.material(Color("5a372a"),0,1))
+	var sign:=Label3D.new();sign.text="본영 [U]";sign.font=game.FONT;sign.font_size=40;sign.pixel_size=.018;sign.position=base+Vector3(0,4.2,0);sign.billboard=BaseMaterial3D.BILLBOARD_ENABLED;sign.outline_size=9;sign.modulate=Color("ffd166");world.add_child(sign)
+func headquarters_hit(screen:Vector2) -> bool:
+	var base:=to_world(game.HQ_POINT)
+	var first:=true;var bounds:=Rect2()
+	for x in [-2.3,2.3]:
+		for y in [0.0,3.8]:
+			for z in [-1.7,1.7]:
+				var point:=camera.unproject_position(base+Vector3(x,y,z))+position
+				if first:bounds=Rect2(point,Vector2.ZERO);first=false
+				else:bounds=bounds.expand(point)
+	return bounds.has_point(screen)
 func art_for(id:int) -> Array:
 	if id>=24:
 		var faction:int=(id-24)/6;var row:int=(id-24)%6

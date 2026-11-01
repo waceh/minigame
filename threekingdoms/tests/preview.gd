@@ -14,8 +14,15 @@ func prepare() -> void:
 func _process(_dt:float) -> bool:
 	ticks+=1
 	if ticks==25:
+		game.paused=false;game.refresh()
 		root.get_texture().get_image().save_png("/private/tmp/threekingdoms-preview.png")
 		game.open_book();game.codex.search.text="사마의";game.codex.rebuild()
 	if ticks==50:
-		root.get_texture().get_image().save_png("/private/tmp/threekingdoms-book.png");quit()
+		root.get_texture().get_image().save_png("/private/tmp/threekingdoms-book.png")
+		game.close_modals();game.paused=false;game.open_headquarters()
+	if ticks==75:
+		root.get_texture().get_image().save_png("/private/tmp/threekingdoms-headquarters.png")
+		game.close_modals();game.state="title";game.overlay.show()
+	if ticks==100:
+		root.get_texture().get_image().save_png("/private/tmp/threekingdoms-title.png");quit()
 	return false
