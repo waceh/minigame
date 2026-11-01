@@ -1,0 +1,55 @@
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; background: radial-gradient(ellipse at top, #293a62, #10182c 65%); color: #edf3ff; font-family: system-ui, sans-serif; }
+.sudoku-app { width: min(100%, 570px); margin: auto; padding: 24px 18px 40px; }
+header { position: relative; margin-bottom: 24px; }
+header a { color: #b7c9e7; text-decoration: none; font-size: .85rem; }
+.eyebrow { display: block; color: #8ddcc7; letter-spacing: .22em; font-size: .7rem; margin-top: 25px; }
+h1 { margin: 5px 0; font-size: 2.5rem; letter-spacing: -.06em; }
+header p { margin: 0; color: #aebed6; font-size: .9rem; }
+button, select { min-height: 44px; border: 1px solid #415473; border-radius: 10px; background: #253550; color: #edf3ff; padding: 8px 12px; font: inherit; cursor: pointer; touch-action: manipulation; }
+button:hover { background: #344b6b; }
+button:focus-visible, select:focus-visible { outline: 3px solid #8ddcc7; outline-offset: 2px; }
+button:disabled { opacity: .4; cursor: default; }
+.settings { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .85rem; }
+.ranking-help { color: #aebed6; font-size: .8rem; line-height: 1.6; }
+.primary { margin-left: auto; background: #8ddcc7; color: #112d2a; border-color: #8ddcc7; font-weight: 700; }
+.primary:hover { background: #b4efdf; }
+.stats { display: flex; justify-content: space-between; margin: 22px 0 12px; color: #aebed6; font-size: .8rem; }
+.stats strong { color: #edf3ff; margin-left: 8px; font-variant-numeric: tabular-nums; }
+.board { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); border: 3px solid #7e94b5; background: #f6f8fd; border-radius: 6px; overflow: hidden; }
+.cell { position: relative; aspect-ratio: 1; min-height: 0; padding: 0; border: 0; border-right: 1px solid #c9d4e4; border-bottom: 1px solid #c9d4e4; border-radius: 0; background: #f6f8fd; color: #2363b9; font-size: clamp(1.1rem, 5vw, 1.8rem); }
+.cell:nth-child(3n) { border-right: 2px solid #7e94b5; }
+.cell:nth-child(9n) { border-right: 0; }
+.cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid #7e94b5; }
+.cell:nth-child(n+73) { border-bottom: 0; }
+.cell.given { color: #23334e; font-weight: 750; }
+.cell.related { background: #e4ecf7; }
+.cell.same { background: #c7e9e1; }
+.cell.selected, .cell:hover { background: #b3d8f5; }
+.cell.selected { box-shadow: inset 0 0 0 2px #286aa9; }
+.cell.error { color: #b82743; background: #ffe1e6; }
+.cell:focus-visible { outline: none; box-shadow: inset 0 0 0 3px #286aa9; z-index: 1; }
+.pencil { display: grid; grid-template-columns: repeat(3, 1fr); height: 100%; padding: 3px; color: #586e8b; font-size: clamp(.5rem, 2.1vw, .75rem); line-height: 1; }
+.pencil span { display: grid; place-items: center; }
+#message { min-height: 2.6em; margin: 14px 0 8px; color: #b9dfd7; font-size: .85rem; line-height: 1.4; }
+.numbers { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; }
+.numbers button { padding: 6px 0; font-size: 1.3rem; }
+.tools { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.tools button { flex: 1 0 auto; padding: 8px 10px; font-size: .82rem; }
+#notes[aria-pressed="true"] { background: #8ddcc7; color: #112d2a; }
+details { margin-top: 24px; color: #aebed6; font-size: .8rem; line-height: 1.7; }
+summary { cursor: pointer; }
+.record-panel { margin-top: 24px; padding: 18px; border: 1px solid #415473; border-radius: 14px; background: #18263d; }
+.record-panel[hidden] { display: none; }
+.record-panel h2 { margin: 0 0 12px; font-size: 1.1rem; }
+.record-panel p { font-size: .8rem; line-height: 1.6; color: #b9cbe1; }
+.record-panel form, .ranking-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .8rem; }
+.record-panel input { width: 140px; flex: 1; min-width: 80px; min-height: 44px; border: 1px solid #415473; border-radius: 8px; padding: 8px; font: inherit; font-size: 1rem; background: #10182c; color: #edf3ff; }
+.ranking-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .75rem; text-align: left; }
+th, td { padding: 10px 5px; border-bottom: 1px solid #344763; }
+th { color: #8ddcc7; white-space: nowrap; }
+td { overflow-wrap: anywhere; }
+td:nth-child(3), td:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 380px) { .sudoku-app { padding: 16px 10px 30px; } .settings { gap: 8px; } .numbers { gap: 3px; } }

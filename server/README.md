@@ -81,6 +81,30 @@ npm run test:integration
 
 단위 테스트는 손패 비공개, 소유권·차례·일치 규칙, 요청 중복, 덱 재활용, 완주·재대전 등을 확인합니다. 통합 테스트는 실제 로컬 Durable Object에 HTTP와 두 WebSocket 클라이언트로 연결해 방 입장, 준비, 카드 행동, 손패 비공개, heartbeat, 재접속, 나가기와 정원을 검사합니다.
 
+## 스도쿠 온라인 순위표
+
+스도쿠는 같은 Worker에 `SudokuCompetition` SQLite Durable Object를 추가해 공유 순위를 보관합니다. 정적 GitHub Pages와 공개 Worker를 연결하면 사용자의 PC에서 서버를 실행할 필요가 없습니다. 기존 카드게임의 데이터와 v1 마이그레이션은 유지하며 v2-sudoku를 추가합니다.
+
+공개 배포:
+
+```bash
+cd server
+npx wrangler login --scopes account:read user:read workers_scripts:write
+npm run deploy
+npm run configure-client -- https://실제배포주소.workers.dev
+```
+
+그다음 `sudoku.html`, `css/sudoku.css`, `js/sudoku/`와 갱신된 메인 메뉴를 정적 사이트에 게시합니다. `configure-client`는 카드게임 설정과 스도쿠의 `SUDOKU_PRODUCTION_SERVER`를 함께 갱신합니다. 사이트 출처가 바뀌면 `ALLOWED_ORIGINS`에 추가하고 서버를 다시 배포하세요. 서버 주소만 공개되며 로그인 토큰은 클라이언트에 넣지 않습니다. 스도쿠에는 로컬 서버 주소 자동 연결이 없습니다.
+
+- `POST /api/sudoku/start`: `{ difficulty }`로 퍼즐과 24시간 유효한 비공개 세션 토큰을 발급합니다. 정답은 전송하지 않습니다.
+- `POST /api/sudoku/:token/finish`: `{ values }`를 서버 정답과 비교하고 처음 성공한 완료 시간을 확정합니다. 클라이언트가 보낸 시간은 사용하지 않습니다. 재시도해도 완료 시간은 유지됩니다.
+- `POST /api/sudoku/:token/publish`: `{ name }`으로 공개 기록을 등록합니다. 첫 이름과 기록은 중복 제출로 변경되지 않습니다.
+- `GET /api/sudoku/rankings?difficulty=normal`: 해당 난이도 상위 10개를 조회합니다. 난이도별 상위 100개를 보관합니다.
+- 개인 연습 기록은 온라인 순위에 올리지 않습니다. 온라인 시간은 서버 발급부터 첫 완료 검증까지이며, 네트워크 지연이 포함됩니다. 탭 전환·일시 중단도 시간에 포함됩니다.
+- 로그인 없는 닉네임 기반 기록입니다. 닉네임 중복, 재도전이 가능하며 자동 풀이 프로그램까지 차단하는 인증 시스템은 아닙니다.
+
+서버 없이 검증: `npm run test:sudoku`, `npm run check`. 공개 배포 후 통합 검증은 `CARD_DUEL_SERVER=https://실제배포주소.workers.dev npm run test:sudoku:integration`으로 실행할 수 있습니다. 통합 검증은 테스트 닉네임 기록을 생성하므로 공개 서비스에서는 운영자가 의도할 때만 실행하세요.
+
 ## Godot 수정 후 빌드
 
 `cardduel/`을 Godot 4.5에서 열어 수정합니다. 웹 런타임은 같은 버전의 `jumpking/web/index.js`·`index.wasm` 등을 공유하여 큰 엔진 파일을 중복 저장하지 않습니다. 카드게임은 자체 PCK만 내보냅니다.

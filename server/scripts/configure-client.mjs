@@ -12,3 +12,9 @@ if (next === source && !source.includes(JSON.stringify(url.origin))) throw Error
 await writeFile(file, next);
 console.log('Godot web client now uses:', url.origin);
 console.log('Publish cardduel.html, cardduel/web/ and js/cardduel/config.js with your static site.');
+const sudokuFile = new URL('../../js/sudoku/online.js', import.meta.url);
+const sudokuSource = await readFile(sudokuFile, 'utf8');
+if (!/^    const SUDOKU_PRODUCTION_SERVER = .*;$/m.test(sudokuSource)) throw Error('Sudoku config marker was not found.');
+await writeFile(sudokuFile, sudokuSource.replace(/^    const SUDOKU_PRODUCTION_SERVER = .*;$/m, `    const SUDOKU_PRODUCTION_SERVER = ${JSON.stringify(url.origin)};`));
+console.log('Sudoku online leaderboard now uses:', url.origin);
+console.log('Publish sudoku.html, css/sudoku.css and js/sudoku/ with your static site.');

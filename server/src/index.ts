@@ -1,6 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
+import { sudokuRoute, type SudokuEnv } from './sudoku.ts';
+export { SudokuCompetition } from './sudoku.ts';
 import { applyAction, createRoom, GameError, joinRoom, newPlayer, normalizeName, viewFor, type RoomState } from './game.ts';
-interface Env { ROOMS: DurableObjectNamespace<CardRoom>; ALLOWED_ORIGINS: string; }
+interface Env extends SudokuEnv { ROOMS: DurableObjectNamespace<CardRoom>; ALLOWED_ORIGINS: string; }
 type Attachment = { playerId: string | null };
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
 function failure(error: unknown): Response {
@@ -31,6 +33,7 @@ export default {
     if (request.method === 'OPTIONS') return cors(new Response(null, { status: 204 }));
     try {
       const url = new URL(request.url);
+      if (url.pathname.startsWith('/api/sudoku/')) return cors(await sudokuRoute(request, env));
       if (url.pathname === '/health' && request.method === 'GET') return cors(json({ ok: true, game: 'card-duel', protocol: 1 }));
       if (url.pathname === '/api/rooms' && request.method === 'POST') {
         const body = await readBody(request);

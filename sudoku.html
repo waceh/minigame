@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스도쿠 · 미니게임</title>
+    <link rel="stylesheet" href="css/sudoku.css?v=3">
+</head>
+<body>
+<main class="sudoku-app">
+    <header><a href="index.html">← 게임 목록</a><span class="eyebrow">NUMBER PUZZLE</span><h1>스도쿠</h1><p>아홉 개의 숫자, 하나의 깔끔한 해답.</p></header>
+    <div class="settings"><label for="game-mode">모드</label><select id="game-mode"><option value="personal">개인 연습</option><option value="online" selected>온라인 경쟁</option></select><label for="difficulty">난이도</label><select id="difficulty"><option value="easy">쉬움</option><option value="normal" selected>보통</option><option value="hard">어려움</option></select><button id="new-game" class="primary">새 게임</button></div>
+    <p class="ranking-help">온라인 경쟁은 서버가 정답과 시간을 확인하며, 힌트·오답 확인 없이 경쟁합니다. 온라인 시간은 탭 전환 중에도 흐릅니다. 모드·난이도를 바꾼 뒤에는 새 게임을 누르세요.</p>
+    <div class="stats"><span>시간 <strong id="timer">00:00</strong></span><span>채운 칸 <strong id="progress">0 / 81</strong></span></div>
+    <div id="board" class="board" role="group" aria-label="스도쿠 보드. 방향키로 이동하고 숫자키로 입력하세요."></div>
+    <p id="message" role="status" aria-live="polite">빈칸을 선택하고 숫자를 입력하세요.</p>
+    <div id="numbers" class="numbers" aria-label="숫자 입력"></div>
+    <div class="tools"><button id="notes" aria-pressed="false">✎ 메모</button><button id="erase">지우기</button><button id="undo">되돌리기</button><button id="check">오답 확인</button><button id="hint">힌트</button></div>
+    <section id="finish-record" class="record-panel" hidden aria-labelledby="finish-title">
+        <h2 id="finish-title">완료 기록</h2>
+        <p id="finish-summary"></p>
+        <form id="record-form"><label for="record-name">이름</label><input id="record-name" maxlength="20" value="플레이어" required autocomplete="nickname"><button id="save-record" class="primary" type="submit">기록 저장</button></form>
+        <p id="record-privacy"></p>
+        <p id="save-status" role="status" aria-live="polite"></p>
+    </section>
+    <section class="record-panel" aria-labelledby="online-title">
+        <h2 id="online-title">온라인 순위표</h2>
+        <p class="ranking-help">모든 사용자가 공유하는 난이도별 상위 10개 기록입니다. 빠른 시간순, 동률은 먼저 완료한 순입니다. 제출한 이름·시간·날짜가 공개됩니다.</p>
+        <div class="ranking-filters"><label for="online-difficulty">난이도</label><select id="online-difficulty"><option value="easy">쉬움</option><option value="normal" selected>보통</option><option value="hard">어려움</option></select><button id="online-refresh">새로고침</button></div>
+        <div class="ranking-scroll"><table><caption class="sr-only">공유 온라인 순위</caption><thead><tr><th scope="col">순위</th><th scope="col">이름</th><th scope="col">시간</th><th scope="col">날짜</th></tr></thead><tbody id="online-rows"></tbody></table></div>
+        <p id="online-status" role="status"></p>
+    </section>
+    <section class="record-panel" aria-labelledby="ranking-title">
+        <h2 id="ranking-title">내 순위표</h2>
+        <p class="ranking-help">이 브라우저에 저장됩니다. 난이도별 빠른 시간순 · 동률은 먼저 완료한 기록순</p>
+        <div class="ranking-filters"><label for="ranking-difficulty">난이도</label><select id="ranking-difficulty"><option value="easy">쉬움</option><option value="normal" selected>보통</option><option value="hard">어려움</option></select><label for="ranking-mode">풀이</label><select id="ranking-mode"><option value="solo">직접 풀이</option><option value="assisted">도움 사용</option></select></div>
+        <p class="ranking-help">힌트·오답 확인을 한 번이라도 사용하면 ‘도움 사용’에 기록됩니다. 메모는 자유롭게 사용하세요.</p>
+        <div class="ranking-scroll"><table><caption class="sr-only">스도쿠 완료 기록 상위 10개</caption><thead><tr><th scope="col">순위</th><th scope="col">이름</th><th scope="col">시간</th><th scope="col">도움</th><th scope="col">날짜</th></tr></thead><tbody id="ranking-rows"></tbody></table></div>
+        <p id="ranking-status" role="status"></p>
+    </section>
+    <details><summary>게임 규칙과 조작법</summary><p>가로줄, 세로줄, 굵은 선으로 나뉜 3×3 상자에 1~9를 한 번씩 넣으세요. 처음 주어진 숫자는 바꿀 수 없습니다.</p><p>숫자키: 입력 · 방향키: 이동 · Backspace/Delete: 지우기 · N: 메모 전환 · Ctrl/Cmd+Z: 되돌리기. 메모 모드에서는 후보 숫자를 적거나 취소할 수 있습니다. 힌트는 선택한 빈칸 또는 오답 한 칸의 정답을 채웁니다.</p><p>난이도는 주어진 숫자 수를 기준으로 합니다. 모든 퍼즐은 정답이 하나입니다. 새 게임을 누르면 현재 진행이 초기화됩니다.</p></details>
+</main>
+<script src="js/sudoku/engine.js?v=1"></script>
+<script src="js/sudoku/records.js?v=1"></script>
+<script src="js/sudoku/online.js?v=1"></script>
+<script src="js/sudoku/main.js?v=3"></script>
+</body>
+</html>

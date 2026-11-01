@@ -8,6 +8,8 @@
     "check": "tsc --noEmit",
     "test": "node --test test/game.test.mjs",
     "test:integration": "node --test test/integration.test.mjs",
+    "test:sudoku": "node --test test/sudoku.test.mjs",
+    "test:sudoku:integration": "node --test test/sudoku.integration.test.mjs",
     "configure-client": "node scripts/configure-client.mjs"
   },
   "devDependencies": {
