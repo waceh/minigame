@@ -108,7 +108,14 @@
     });
     function message(text) { $('message').textContent = text; }
     function render() {
+        if (!values) {
+            cells.forEach(cell => { cell.disabled = true; });
+            for (const id of ['notes', 'erase', 'undo', 'check', 'hint']) $(id).disabled = true;
+            $('numbers').querySelectorAll('button').forEach(button => { button.disabled = true; });
+            return;
+        }
         cells.forEach((cell, i) => {
+            cell.disabled = loading;
             cell.className = 'cell' + (puzzle[i] ? ' given' : '') + (peers(i, selected) ? ' related' : '') +
                 (values[selected] && values[i] === values[selected] ? ' same' : '') + (i === selected ? ' selected' : '') + (errors.has(i) ? ' error' : '');
             cell.replaceChildren();
@@ -123,9 +130,9 @@
         });
         $('progress').textContent = `${values.filter(Boolean).length} / 81`;
         $('notes').setAttribute('aria-pressed', String(pencil));
-        $('undo').disabled = !history.length || won;
+        $('undo').disabled = !history.length || won || loading;
         for (const id of ['notes', 'erase', 'check', 'hint']) $(id).disabled = won || loading || (Boolean(onlineRun) && ['check', 'hint'].includes(id));
-        $('numbers').querySelectorAll('button').forEach(button => { button.disabled = won; });
+        $('numbers').querySelectorAll('button').forEach(button => { button.disabled = won || loading; });
     }
     function snapshot() { history.push({ values: values.slice(), notes: notes.map(n => n.slice()) }); }
     function finishMove() {
@@ -188,6 +195,7 @@
     async function start() {
         if (loading) return;
         loading = true; $('new-game').disabled = true;
+        render();
         const difficulty = $('difficulty').value, online = $('game-mode').value === 'online';
         let next;
         try {
