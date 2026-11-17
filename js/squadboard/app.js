@@ -18,6 +18,7 @@ function lineup(formation) {
 function defaults(){return {title:'나의 베스트 일레븐',formation:'4-3-3',color:'#c8f36a',opponents:false,names:true,players:lineup('4-3-3'),arrows:[]};}
 let state=defaults(), selected=-1, tool='move', gesture=null;
 try { const saved=JSON.parse(localStorage.getItem('squadboard-v1')); if(saved && formations[saved.formation] && /^#[0-9a-f]{6}$/i.test(saved.color) && typeof saved.title==='string' && Array.isArray(saved.players) && saved.players.length===11 && saved.players.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&typeof p.name==='string'&&typeof p.role==='string') && Array.isArray(saved.arrows)) state={...state,...saved}; } catch {}
+state.players.forEach((p,i)=>{p.number=validNumber(p.number)?String(Number(p.number)):lineup(state.formation)[i].number;});
 function save(){try{localStorage.setItem('squadboard-v1',JSON.stringify(state));$('save-status').textContent='● 이 기기에 자동 저장';}catch{$('save-status').textContent='저장 공간을 사용할 수 없습니다';}}
 function el(tag,attrs={},text){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));if(text!==undefined)n.textContent=text;return n;}
 function field(){
@@ -37,8 +38,31 @@ function token(p,i,opponent=false){const g=el('g',{transform:`translate(${p.x} $
  if(state.names){const label=el('text',{'text-anchor':'middle',y:45,fill:'#fff','font-size':13,'font-family':'sans-serif',stroke:'#173021','stroke-width':4,'paint-order':'stroke', 'stroke-linejoin':'round'},p.name);g.append(label);}return g;
 }
 function renderPitch(){field();state.arrows.forEach(a=>svg.append(arrow(a)));if(state.opponents)lineup(state.formation).forEach((p,i)=>svg.append(token({...p,x:680-p.x,y:920-p.y},i,true)));state.players.forEach((p,i)=>svg.append(token(p,i)));}
-function renderRoster(){const list=$('roster');list.replaceChildren();state.players.forEach((p,i)=>{const b=document.createElement('button');b.className='roster-player'+(selected===i?' selected':'');for(const [c,t] of [['roster-number',p.number],['roster-name',p.name],['roster-role',p.role]]){const s=document.createElement('span');s.className=c;s.textContent=t;b.append(s);}b.onclick=()=>select(i);list.append(b);});}
-function select(i){selected=i;$('editor').hidden=false;$('player-name').value=state.players[i].name;$('player-number').value=state.players[i].number;$('player-role').value=state.players[i].role;renderPitch();renderRoster();}
+function validNumber(value){return /^\d{1,2}$/.test(String(value)) && Number(value)>=1 && Number(value)<=99;}
+function updateNumber(input,i){
+ const valid=validNumber(input.value);
+ input.setCustomValidity(valid?'':'등번호는 1~99 사이의 정수로 입력해 주세요.');
+ input.setAttribute('aria-invalid',String(!valid));
+ if(!valid)return;
+ state.players[i].number=String(Number(input.value));
+ if(selected===i && input!==$('player-number')){$('player-number').value=state.players[i].number;$('player-number').setCustomValidity('');$('player-number').setAttribute('aria-invalid','false');}
+ const rosterInput=$('roster').querySelector(`[data-number="${i}"]`);
+ if(rosterInput && rosterInput!==input)rosterInput.value=state.players[i].number;
+ renderPitch();save();
+}
+function finishNumber(input,i){
+ if(!validNumber(input.value)){input.reportValidity();input.value=state.players[i].number;}
+ else input.value=state.players[i].number;
+ input.setCustomValidity('');input.setAttribute('aria-invalid','false');
+}
+function renderRoster(){const list=$('roster');list.replaceChildren();state.players.forEach((p,i)=>{
+ const row=document.createElement('div');row.className='roster-row'+(selected===i?' selected':'');
+ const number=document.createElement('input');number.className='roster-number';number.type='number';number.min='1';number.max='99';number.step='1';number.inputMode='numeric';number.value=p.number;number.dataset.number=i;number.setAttribute('aria-label',`${p.name} 등번호`);
+ number.oninput=()=>updateNumber(number,i);number.onblur=()=>finishNumber(number,i);
+ const b=document.createElement('button');b.className='roster-player';b.setAttribute('aria-label',`${p.name} 선수 편집`);
+ for(const [c,t] of [['roster-name',p.name],['roster-role',p.role]]){const span=document.createElement('span');span.className=c;span.textContent=t;b.append(span);}b.onclick=()=>select(i);row.append(number,b);list.append(row);
+});}
+function select(i){selected=i;$('editor').hidden=false;$('player-number').setCustomValidity('');$('player-number').setAttribute('aria-invalid','false');$('player-name').value=state.players[i].name;$('player-number').value=state.players[i].number;$('player-role').value=state.players[i].role;renderPitch();renderRoster();}
 function render(){ $('team-name').value=state.title;$('board-title').textContent=state.title||'나의 스쿼드';$('formation').value=state.formation;$('formation-badge').textContent=state.formation;$('team-color').value=state.color;$('opponents').checked=state.opponents;$('names').checked=state.names;renderPitch();renderRoster();}
 function point(e){const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());return {x:Math.max(28,Math.min(652,pt.x)),y:Math.max(30,Math.min(870,pt.y))};}
 svg.addEventListener('pointerdown',e=>{if(e.button!==0)return;const pos=point(e);if(tool==='arrow'){gesture={type:'arrow',start:pos,last:pos};}else{const g=e.target.closest('[data-player]');if(!g)return;const i=Number(g.dataset.player);select(i);gesture={type:'player',i,dx:state.players[i].x-pos.x,dy:state.players[i].y-pos.y};}svg.setPointerCapture(e.pointerId);e.preventDefault();});
@@ -50,7 +74,9 @@ $('team-name').oninput=e=>{state.title=e.target.value;$('board-title').textConte
 $('formation').onchange=e=>{const fresh=lineup(e.target.value);state.players=fresh.map((p,i)=>({...state.players[i],x:p.x,y:p.y,role:p.role}));state.formation=e.target.value;selected=-1;$('editor').hidden=true;render();save();};
 $('team-color').oninput=e=>{state.color=e.target.value;renderPitch();save();};
 for(const key of ['opponents','names'])$(key).onchange=e=>{state[key]=e.target.checked;renderPitch();save();};
-for(const [id,key] of [['player-name','name'],['player-number','number'],['player-role','role']])$(id).oninput=e=>{if(selected<0)return;if(key==='number'&&(!Number.isInteger(+e.target.value)||+e.target.value<1||+e.target.value>99))return;state.players[selected][key]=e.target.value;renderPitch();renderRoster();save();};
+for(const [id,key] of [['player-name','name'],['player-role','role']])$(id).oninput=e=>{if(selected<0)return;state.players[selected][key]=e.target.value;renderPitch();renderRoster();save();};
+$('player-number').oninput=e=>{if(selected>=0)updateNumber(e.target,selected);};
+$('player-number').onblur=e=>{if(selected>=0)finishNumber(e.target,selected);};
 document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;document.querySelectorAll('[data-tool]').forEach(n=>n.classList.toggle('active',n===b));svg.style.cursor=tool==='arrow'?'crosshair':'';});
 $('undo').onclick=()=>{state.arrows.pop();renderPitch();save();};
 $('reset').onclick=()=>{if(!confirm('선수 이름과 배치를 포함한 보드를 초기화할까요?'))return;state=defaults();selected=-1;$('editor').hidden=true;render();save();};
