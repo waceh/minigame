@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "crewping",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-24",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "triggers": {
+    "crons": [
+      "*/30 * * * *"
+    ]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "CREW_KV",
+      "id": "94903aa615bb4f039dfa8eeebb790e59"
+    }
+  ],
+  "vars": {
+    "DEFAULT_CREW_SLUG": "default"
+  }
+}

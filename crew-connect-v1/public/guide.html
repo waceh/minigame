@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="robots" content="noindex, nofollow">
+    <title>CrewPing — 사용 가이드</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css?v=2.1">
+    <style>
+        .guide-shell {
+            padding-bottom: 40px;
+        }
+        .guide-hero {
+            background: linear-gradient(145deg, #0f172a 0%, #1e3a8a 100%);
+            color: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 22px 18px;
+        }
+        .guide-hero-badge {
+            display: inline-block;
+            font-size: 11.5px;
+            font-weight: 800;
+            background: rgba(96, 165, 250, 0.22);
+            color: #93c5fd;
+            border: 1px solid rgba(147, 197, 253, 0.35);
+            padding: 4px 10px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+        }
+        .guide-hero h2 {
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.35;
+            margin-bottom: 6px;
+            word-break: keep-all;
+        }
+        .guide-hero p {
+            font-size: 13.5px;
+            color: #cbd5e1;
+            line-height: 1.55;
+            word-break: keep-all;
+        }
+        .guide-role-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            background: #e2e8f0;
+            padding: 5px;
+            border-radius: 13px;
+        }
+        .gr-tab {
+            border: none;
+            background: transparent;
+            color: var(--sub);
+            font-size: 13px;
+            font-weight: 800;
+            padding: 9px 8px;
+            border-radius: 9px;
+            cursor: pointer;
+        }
+        .gr-tab.active {
+            background: #ffffff;
+            color: var(--text);
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+        }
+        .g-section {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            padding: 17px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+        .g-sec-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .g-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #eff6ff;
+            color: var(--blue);
+            font-size: 12.5px;
+            font-weight: 800;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+        }
+        .g-sec-head h3 {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+        .g-p {
+            font-size: 13.5px;
+            color: var(--sub);
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+        .g-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .g-step-item {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            padding: 11px 12px;
+            font-size: 13px;
+            color: var(--text);
+            line-height: 1.55;
+        }
+        .g-step-item strong {
+            color: var(--blue);
+        }
+        .signal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sig-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 11px 12px;
+            border-radius: 11px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .sig-row.red { background: #fef2f2; border: 1px solid #fecaca; }
+        .sig-row.amber { background: #fffbeb; border: 1px solid #fde68a; }
+        .sig-row.green { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .sig-dot {
+            font-size: 18px;
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+        .os-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        @media (max-width: 380px) {
+            .os-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .os-box {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 12.5px;
+            line-height: 1.55;
+            color: var(--sub);
+        }
+        .os-box strong {
+            display: block;
+            font-size: 13.5px;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        .code-pill {
+            display: block;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 11.5px;
+            padding: 9px 11px;
+            border-radius: 9px;
+            word-break: break-all;
+            line-height: 1.45;
+        }
+        .friend-gen-box {
+            background: #f8fafc;
+            border: 1px dashed #94a3b8;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell guide-shell">
+        <header class="app-bar">
+            <div class="app-brand">
+                <span class="brand-dot" style="background:#2563eb;"></span>
+                <h1>CrewPing 사용 가이드</h1>
+            </div>
+            <div class="app-actions">
+                <a id="btnBackToApp" href="./" class="chip-btn" style="text-decoration:none; color:#0f172a;">← 화면으로 돌아가기</a>
+            </div>
+        </header>
+
+        <main class="view active">
+            <!-- 승무원 모드(?mode=crew) 접속 시에만 보이는 탭 전환기 (가족 페이지에서는 승무원 가이드를 노출하지 않음) -->
+            <div id="crewOnlyGuideTabs" class="guide-role-tabs hidden">
+                <button type="button" class="gr-tab active" data-gtab="crew">🧑‍✈️ 승무원 본인 가이드</button>
+                <button type="button" class="gr-tab" data-gtab="family">❤️ 가족용 가이드 미리보기</button>
+            </div>
+
+            <!-- ================= [A] 파트너 · 부모님 · 가족용 사용 가이드 ================= -->
+            <div id="guideFamilyPane" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
+                <section class="guide-hero">
+                    <span class="guide-hero-badge">❤️ 파트너 · 부모님 · 가족 안내서</span>
+                    <h2>“지금 연락해도 괜찮을까?”<br>3초 만에 한눈에 확인하세요</h2>
+                    <p>시차 계산이나 비행 스케줄표를 일일이 찾아볼 필요 없이, 현재 연락하기 편한 시간인지 신호등 색상으로 알려드려요.</p>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">1</span>
+                        <h3>스마트폰 ‘홈 화면에 추가’ 하기 (추천)</h3>
+                    </div>
+                    <p class="g-p">별도 앱 설치나 회원가입 없이, 아래 방법으로 홈 화면에 아이콘을 만들어 두시면 일반 앱처럼 터치 한 번으로 열 수 있어요.</p>
+                    <div class="os-grid">
+                        <div class="os-box">
+                            <strong>🍎 아이폰 (Safari)</strong>
+                            1. Safari로 공유받은 주소 접속<br>
+                            2. 하단 가운데 <strong>공유 버튼(⬆️)</strong> 터치<br>
+                            3. 메뉴를 올려 <strong>‘홈 화면에 추가’</strong> 선택 후 ‘추가’ 터치
+                        </div>
+                        <div class="os-box">
+                            <strong>🤖 갤럭시 (Chrome·삼성)</strong>
+                            1. 브라우저로 공유받은 주소 접속<br>
+                            2. 우측 상단 <strong>메뉴(⋮ 또는 ≡)</strong> 터치<br>
+                            3. <strong>‘홈 화면에 추가’</strong>(또는 앱 설치) 터치
+                        </div>
+                    </div>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">2</span>
+                        <h3>3가지 상태 색상 보는 법</h3>
+                    </div>
+                    <div class="signal-list">
+                        <div class="sig-row red">
+                            <span class="sig-dot">🔴</span>
+                            <div>
+                                <strong>비행 근무 중 · 연락 불가</strong><br>
+                                기내 근무 중이라 휴대폰이 비행기 모드예요. 편하게 카톡 메시지를 남겨두시면 착륙 후 확인합니다.
+                            </div>
+                        </div>
+                        <div class="sig-row amber">
+                            <span class="sig-dot">🟡</span>
+                            <div>
+                                <strong>회복 수면 · 현지 새벽 · 대기 근무</strong><br>
+                                한국은 낮이라도 현지는 새벽이거나 비행 직후 잠든 시간이에요. 벨소리 전화 대신 무음 카톡을 추천해요.
+                            </div>
+                        </div>
+                        <div class="sig-row green">
+                            <span class="sig-dot">🟢</span>
+                            <div>
+                                <strong>한국 체류 · 해외 현지 낮 · 잠깐 여유</strong><br>
+                                비교적 카톡 확인이 수월한 시간대예요. 가볍게 안부 인사를 남겨보세요!
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">3</span>
+                        <h3>꼭 기억해 주세요 (배려 가이드)</h3>
+                    </div>
+                    <p class="g-p">
+                        화면에 표시되는 ‘개략적 확인 예상 시각’과 ‘집 도착 예측’은 비행 스케줄을 바탕으로 계산한 <strong>단순 예측 참고치</strong>입니다.<br><br>
+                        공항 입국 심사 대기, 호텔 셔틀 이동, 시차 피로 및 개인 컨디션에 따라 <strong>안내된 시간에도 바로 답장하거나 음성·화상통화를 받기 어려울 수 있으니</strong> 늘 부담 없는 카톡 한 줄을 먼저 남겨주세요 ❤️
+                    </p>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">4</span>
+                        <h3>부가기능 200% 활용하기</h3>
+                    </div>
+                    <div class="g-steps">
+                        <div class="g-step-item">
+                            <strong>🛍️ 면세·현지 심부름 장바구니</strong><br>
+                            화면 아래 <code>✨ 상세 · 고급기능 더보기</code>를 열면 부탁할 물건을 간단히 적어둘 수 있어요. 승무원 화면에도 실시간 공유됩니다.
+                        </div>
+                        <div class="g-step-item">
+                            <strong>📌 가족 중요 일정 등록</strong><br>
+                            파트너 야근·출장이나 부모님 병원 예약, 가족 식사 일정을 적어두면 승무원이 비행 맞교환(스왑)을 할 때 겹치지 않게 참고할 수 있어요.
+                        </div>
+                        <div class="g-step-item">
+                            <strong>📅 내 휴대폰 달력에 일정 넣기</strong><br>
+                            하단 <code>📅 이번 달 일정</code> 탭 우측의 <code>캘린더(.ics)</code> 버튼을 누르면 내 스마트폰 기본 달력 앱에도 비행 일정을 저장할 수 있습니다.
+                        </div>
+                    </div>
+                </section>
+
+                <a id="btnBottomBackFamily" href="./" class="primary-btn full-btn" style="text-decoration:none; text-align:center;">🟢 지금 상태 화면으로 돌아가기</a>
+            </div>
+
+            <!-- ================= [B] 승무원 본인 전용 설정 & 운영 가이드 (?mode=crew 전용) ================= -->
+            <div id="guideCrewPane" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
+                <section class="guide-hero">
+                    <span class="guide-hero-badge">🧑‍✈️ 승무원 본인 전용 매뉴얼</span>
+                    <h2>설정은 1분 만에 간단하게,<br>비행 중 안부는 터치 한 번으로!</h2>
+                    <p>최초 1회만 호칭·비밀번호·캘린더를 등록해 두면 매 비행마다 가족들에게 일일이 스케줄표를 캡처해 보낼 필요가 없습니다.</p>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">1</span>
+                        <h3>초기 설정 &amp; 본인 페이지 보안 잠금</h3>
+                    </div>
+                    <div class="g-steps">
+                        <div class="g-step-item">
+                            <strong>🔐 본인만 접근 가능한 비밀번호(PIN) 잠금</strong><br>
+                            파트너·부모님·가족 공유 링크(<code>/</code>)에는 승무원 페이지로 넘어가는 버튼이나 메뉴가 전혀 없습니다. 또한 본인 전용 주소(<code>?mode=crew</code>) 역시 설정하신 <strong>4자리 이상 비밀번호</strong>를 입력해야만 열립니다.
+                        </div>
+                        <div class="g-step-item">
+                            <strong>📱 내 휴대폰에서는 자동 로그인 유지</strong><br>
+                            본인 스마트폰에서 한 번 비밀번호를 입력하면 기기에 안전하게 기억되어 매번 다시 입력할 필요가 없습니다. (공용 PC 등에서는 우측 상단 <code>🔒</code> 버튼으로 즉시 잠금 가능)
+                        </div>
+                    </div>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">2</span>
+                        <h3>Google Calendar 자동 연동 방법 (.ics)</h3>
+                    </div>
+                    <p class="g-p">복잡한 앱 권한 승인 없이 구글 캘린더의 읽기 전용 주소 한 줄만 복사해 넣으면 <strong>30분마다 새 스케줄과 인천공항 연착 정보(#15095074)를 자동 갱신</strong>합니다.</p>
+                    <div class="g-steps">
+                        <div class="g-step-item">
+                            <strong>STEP 1.</strong> PC 크롬(또는 모바일 브라우저 데스크톱 모드)에서 <a href="https://calendar.google.com" target="_blank" rel="noopener">calendar.google.com</a> 접속
+                        </div>
+                        <div class="g-step-item">
+                            <strong>STEP 2.</strong> 우측 상단 <strong>톱니바퀴(⚙️) → 설정</strong> 클릭 후, 좌측 메뉴 <strong>‘내 캘린더의 설정’</strong>에서 비행 일정을 기록하는 캘린더 선택
+                        </div>
+                        <div class="g-step-item">
+                            <strong>STEP 3.</strong> 화면 맨 아래 <strong>‘캘린더 통합’</strong> 항목에 있는 <strong>‘iCal 형식의 비공개 주소’</strong> URL 복사 (<code>...basic.ics</code>로 끝나는 주소)
+                        </div>
+                        <div class="g-step-item">
+                            <strong>STEP 4.</strong> 승무원 페이지 우측 상단 <strong>⚙️ 설정 → 2번 칸</strong>에 붙여넣고 <strong>[저장·동기화]</strong> 클릭!
+                        </div>
+                    </div>
+                    <p class="field-help">
+                        💡 <strong>일정 제목 작성 팁:</strong> 구글 캘린더에 <code>KE703 인천 → 도쿄</code>, <code>마드리드 체류</code>, <code>자택 스탠바이</code>, <code>휴무(OFF)</code>처럼 평소대로 적어두면 편명·체류 국가·시차·근무 형태를 자동으로 인식합니다. 구글 캘린더를 쓰지 않으셔도 <strong>.ics 파일 직접 업로드</strong>나 <strong>수동 일정 추가</strong>로 똑같이 사용하실 수 있어요!
+                    </p>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">3</span>
+                        <h3>비행 전후 원터치 상태 알림 &amp; 비공개 기능</h3>
+                    </div>
+                    <div class="g-steps">
+                        <div class="g-step-item">
+                            <strong>🛬 [잘 내렸어] · 😴 [이제 잘게] · 💬 [잠깐 여유]</strong><br>
+                            랜딩 직후 입국장을 걸어가거나 호텔 도착 직후 너무 피곤할 때, 카톡 대신 버튼 하나만 누르면 가족 화면과 카톡 챗봇이 즉시 해당 상태로 안내합니다. 다시 <code>자동모드 복귀</code>를 누르면 스케줄 계산 모드로 돌아옵니다.
+                        </div>
+                        <div class="g-step-item">
+                            <strong>🔒 체류비(퍼디엠) 가늠치는 본인에게만 표시</strong><br>
+                            <code>✨ 상세 · 고급기능 더보기</code> 맨 아래의 체류비 개략 예측치는 오직 비밀번호 인증을 거친 승무원 본인 화면에서만 보이며, 파트너·부모님 공유 링크에서는 완전히 숨겨집니다.
+                        </div>
+                    </div>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">4</span>
+                        <h3>가족에게 공유하기 &amp; 지인 승무원 추가 발급</h3>
+                    </div>
+                    <p class="g-p">파트너·부모님께는 아래 버튼으로 <strong>가족 공유용 링크</strong>와 <strong>가족용 사용 가이드 링크</strong>를 카톡으로 전달해 주세요.</p>
+                    <div class="banner-btns">
+                        <button type="button" id="btnGuideCopyFamilyApp" class="primary-btn">❤️ 가족용 앱 링크 복사</button>
+                        <button type="button" id="btnGuideCopyFamilyDoc" class="outline-btn">📖 가족용 설명서 복사</button>
+                    </div>
+                    <span id="guideCopyToast" class="toast-inline"></span>
+
+                    <div class="friend-gen-box">
+                        <strong style="font-size:13px;">👥 동료·지인 승무원(최대 5명+) 독립 공간 만들어주기</strong>
+                        <p class="field-help" style="margin-top:0;">영문 별명만 입력하면 기존 데이터와 완전히 분리된 새 승무원 전용 세트가 즉시 생성됩니다.</p>
+                        <div class="inline-group">
+                            <input type="text" id="inpFriendSlug" class="field-input" placeholder="영문 별명 (예: minji,jihoon)">
+                            <button type="button" id="btnGenFriendLinks" class="outline-btn" style="white-space:nowrap;">링크 생성</button>
+                        </div>
+                        <div id="friendLinksResult" class="hidden" style="display:flex; flex-direction:column; gap:6px;">
+                            <code id="friendCrewUrlBox" class="code-pill"></code>
+                            <code id="friendFamUrlBox" class="code-pill"></code>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="g-section">
+                    <div class="g-sec-head">
+                        <span class="g-num">5</span>
+                        <h3>카카오톡 챗봇 스킬 연동 (선택 사항)</h3>
+                    </div>
+                    <p class="g-p">카카오톡 채널(카카오 i 오픈빌더)을 연결해 두면 어르신들이 웹 화면 대신 카톡방에서 “지금 연락해도 돼?”라고 물어보셨을 때 자동으로 답변합니다.</p>
+                    <code id="kakaoWebhookBox" class="code-pill"></code>
+                    <a id="btnOpenKakaoDetailGuide" href="./kakao-guide?mode=crew" class="outline-btn full-btn" style="text-decoration:none; text-align:center; background:#fefce8; border-color:#facc15; color:#1e293b;">💬 카카오톡 세팅 방법 상세보기 (STEP 1~5) →</a>
+                </section>
+
+                <a id="btnBottomBackCrew" href="./?mode=crew" class="primary-btn full-btn" style="text-decoration:none; text-align:center;">🧑‍✈️ 승무원 관리 화면으로 돌아가기</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const slug = (params.get("crew") || "default").toLowerCase().replace(/[^a-z0-9_-]/g, "") || "default";
+            const isCrewMode = params.get("mode") === "crew";
+
+            const baseDir = window.location.origin + window.location.pathname.replace(/\/guide(?:\.html)?\/?$/, "/");
+            const isHttp = window.location.protocol.startsWith("http");
+            const guidePath = isHttp ? `${baseDir}guide` : `${baseDir}guide.html`;
+            const kakaoGuidePath = isHttp ? `${baseDir}kakao-guide` : `${baseDir}kakao-guide.html`;
+            const crewQuery = slug !== "default" ? `crew=${encodeURIComponent(slug)}` : "";
+            const familyAppUrl = crewQuery ? `${baseDir}?${crewQuery}` : baseDir;
+            const crewAppUrl = crewQuery ? `${baseDir}?${crewQuery}&mode=crew` : `${baseDir}?mode=crew`;
+            const familyGuideUrl = crewQuery ? `${guidePath}?${crewQuery}` : guidePath;
+            const kakaoDetailUrl = crewQuery ? `${kakaoGuidePath}?${crewQuery}&mode=crew` : `${kakaoGuidePath}?mode=crew`;
+            const kakaoSkillUrl = `${baseDir}api/kakao/skill${slug !== "default" ? `?crew=${encodeURIComponent(slug)}` : ""}`;
+
+            const familyPane = document.getElementById("guideFamilyPane");
+            const crewPane = document.getElementById("guideCrewPane");
+            const roleTabs = document.getElementById("crewOnlyGuideTabs");
+            const backBtn = document.getElementById("btnBackToApp");
+
+            document.getElementById("btnBottomBackFamily").href = familyAppUrl;
+            document.getElementById("btnBottomBackCrew").href = crewAppUrl;
+            document.getElementById("btnOpenKakaoDetailGuide").href = kakaoDetailUrl;
+            document.getElementById("kakaoWebhookBox").textContent = `스킬 URL: ${kakaoSkillUrl}`;
+
+            function showPane(which) {
+                if (which === "crew") {
+                    crewPane.classList.remove("hidden");
+                    crewPane.style.display = "flex";
+                    familyPane.classList.add("hidden");
+                    familyPane.style.display = "none";
+                } else {
+                    familyPane.classList.remove("hidden");
+                    familyPane.style.display = "flex";
+                    crewPane.classList.add("hidden");
+                    crewPane.style.display = "none";
+                }
+            }
+
+            if (isCrewMode) {
+                // 승무원 전용 가이드 접속: 본인 매뉴얼 기본 표시 + 가족용 가이드 미리보기 탭 활성화
+                backBtn.href = crewAppUrl;
+                roleTabs.classList.remove("hidden");
+                showPane("crew");
+
+                roleTabs.querySelectorAll(".gr-tab").forEach((tab) => {
+                    tab.addEventListener("click", () => {
+                        roleTabs.querySelectorAll(".gr-tab").forEach((t) => t.classList.remove("active"));
+                        tab.classList.add("active");
+                        showPane(tab.dataset.gtab);
+                    });
+                });
+
+                const toast = document.getElementById("guideCopyToast");
+                const flash = (msg) => {
+                    toast.textContent = msg;
+                    setTimeout(() => { toast.textContent = ""; }, 2500);
+                };
+
+                document.getElementById("btnGuideCopyFamilyApp").addEventListener("click", () => {
+                    navigator.clipboard?.writeText(familyAppUrl);
+                    flash("✅ 가족 공유용 앱 링크가 복사되었습니다!");
+                });
+                document.getElementById("btnGuideCopyFamilyDoc").addEventListener("click", () => {
+                    navigator.clipboard?.writeText(familyGuideUrl);
+                    flash("✅ 가족용 사용 가이드 링크가 복사되었습니다!");
+                });
+
+                document.getElementById("btnGenFriendLinks").addEventListener("click", () => {
+                    const fSlug = document.getElementById("inpFriendSlug").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+                    if (!fSlug) return;
+                    const resBox = document.getElementById("friendLinksResult");
+                    resBox.classList.remove("hidden");
+                    document.getElementById("friendCrewUrlBox").textContent = `🧑‍✈️ 지인 본인용: ${baseDir}?crew=${fSlug}&mode=crew`;
+                    document.getElementById("friendFamUrlBox").textContent = `❤️ 지인 가족용: ${baseDir}?crew=${fSlug}`;
+                });
+            } else {
+                // 일반 가족 공유 가이드 접속: 오직 가족용 가이드만 표시하며 승무원 페이지 링크 노출 완전 차단!
+                backBtn.href = familyAppUrl;
+                roleTabs.classList.add("hidden");
+                showPane("family");
+            }
+        })();
+    </script>
+</body>
+</html>

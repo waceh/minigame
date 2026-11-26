@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>CrewPing (크루핑) — 승무원과 파트너·가족을 위한 Google Calendar 양방향 컨시어지 (v3.6)</title>
+    <link rel="stylesheet" href="style.css?v=3.6">
+</head>
+<body data-role="partner">
+    <header class="top-header">
+        <div class="container header-inner">
+            <div class="brand" id="brandHomeBtn" role="button" tabindex="0" aria-label="현재 상태 메인으로 이동">
+                <span class="brand-logo" aria-hidden="true">✈️</span>
+                <div>
+                    <div class="brand-badge">CREW &amp; FAMILY TWO-SIDED CONCIERGE</div>
+                    <h1 class="brand-title">CrewPing <span id="headerCrewName">김하늘 승무원 · 가족 컨시어지</span></h1>
+                </div>
+            </div>
+
+            <!-- [3-5 + 승무원 본인 뷰 확장] 4-Role 맞춤 뷰 전환기 -->
+            <div class="role-switcher" aria-label="열람자 권한 뷰 전환">
+                <span class="role-label">🔐 뷰 전환:</span>
+                <button type="button" class="role-btn" data-role-switch="crew">🧑‍✈️ 승무원 본인 (비행비서)</button>
+                <button type="button" class="role-btn active" data-role-switch="partner">❤️ 파트너 (배우자·연인)</button>
+                <button type="button" class="role-btn" data-role-switch="grandparents">🏡 부모님·어르신 (큰글씨)</button>
+                <button type="button" class="role-btn" data-role-switch="kids">🧒 아이들 (키즈뷰)</button>
+            </div>
+
+            <nav class="tab-nav" id="mainTabNav" aria-label="주요 메뉴">
+                <button type="button" class="tab-btn active" data-tab="status">🟢 현재 상태</button>
+                <button type="button" class="tab-btn crew-tab-highlight admin-or-crew-tab" data-tab="crew">🧑‍✈️ 승무원 전용 라운지(7종)</button>
+                <button type="button" class="tab-btn admin-or-crew-tab" data-tab="schedule">📅 월간 스케줄 · 캘린더</button>
+                <button type="button" class="tab-btn admin-or-crew-tab" data-tab="settings">⚙️ GCal 연동 · 설정</button>
+                <button type="button" class="tab-btn admin-or-crew-tab" data-tab="extra">💬 카톡봇 · 제안서PDF</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <!-- 권한 안내 배너 -->
+        <div id="roleNoticeBanner" class="role-notice-banner hidden">
+            <span id="roleNoticeText"></span>
+            <button type="button" class="btn btn-outline" id="btnBackToHusband">❤️ 파트너 뷰로 전환</button>
+        </div>
+
+        <!-- 설정 미완료 안내 배너 -->
+        <div id="unconfiguredBanner" class="setup-banner hidden">
+            <div>
+                <strong>⚠️ 아직 연동된 Google Calendar 스케줄이 없습니다.</strong>
+                <span>설정 페이지에서 Google Calendar 내보내기(.ics) 파일을 올리거나 비공개 iCal 주소를 연결해 주세요.</span>
+            </div>
+            <button type="button" class="btn btn-primary" data-goto="settings">Google Calendar 연동하기</button>
+        </div>
+
+        <!-- 시뮬레이션 컨트롤러 (모든 탭 상단 공통 유지로 언제든 시간 변경 가능) -->
+        <div class="sim-bar" id="simControlBar">
+            <div class="sim-bar-top">
+                <div>
+                    <span class="sim-tag">🎛️ 실시간 시점 시뮬레이터 (한국시간 KST)</span>
+                    <p class="sim-desc">시간을 바꿔보거나 상단 <strong>[🧑‍✈️ 승무원 본인 뷰]</strong>로 전환해 원터치 생존신고·스케줄 맞교환 체커·쇼업 알람·착륙 3줄 브리핑을 체험해 보세요.</p>
+                </div>
+                <div class="sim-actions-right">
+                    <button type="button" id="btnSimDelay" class="btn btn-warn-sm">⚡ 귀국편 +60분 연착 테스트</button>
+                </div>
+            </div>
+            <div class="preset-buttons">
+                <button type="button" class="preset-btn" data-dt="2026-11-21T15:30">🚗 출근(쇼업) 준비 (21일 15:30)</button>
+                <button type="button" class="preset-btn active" data-dt="2026-11-21T23:30">✈️ 스페인행 비행중 (21일 23:30)</button>
+                <button type="button" class="preset-btn" data-dt="2026-11-22T12:30">😴 착륙 직후 회복수면 (22일 12:30)</button>
+                <button type="button" class="preset-btn" data-dt="2026-11-22T19:00">🟢 스페인 체류·낮 (22일 19:00)</button>
+                <button type="button" class="preset-btn" data-dt="2026-11-23T09:30">🌙 스페인 현지 새벽 (23일 09:30)</button>
+                <button type="button" class="preset-btn" data-dt="2026-11-24T07:30">✈️ 귀국편 비행중 (24일 07:30)</button>
+                <button type="button" class="preset-btn" data-dt="2026-11-24T11:30">🇰🇷 한국 귀국 완료 (24일 11:30)</button>
+            </div>
+            <div class="sim-custom-time">
+                <label for="simDatetimeInput">임의 한국 시각(KST) 지정:</label>
+                <input type="datetime-local" id="simDatetimeInput" value="2026-11-21T23:30">
+                <span id="overrideActiveChip" class="override-chip hidden"></span>
+                <span id="apiSyncStamp" class="sim-sync-stamp">📅 Google Calendar 양방향 동기화 · 공공API 30분 갱신</span>
+            </div>
+        </div>
+
+        <!-- ================= PAGE 1 (MAIN): 가족이 보는 현재 상태 페이지 ================= -->
+        <section id="tab-status" class="tab-panel active">
+            <!-- 신규 추가된 승무원 본인 전용 7대 기능 바로가기 배너 -->
+            <div class="role-notice-banner hide-on-grandparents hide-on-kids" style="background:#faf5ff; border-color:#c4b5fd; color:#4c1d95;">
+                <span>🧑‍✈️ <strong>[신규 반영 완료] 승무원 본인 전용 7대 기능</strong>(원터치 생존신고 · 비행 맞교환 충돌 체커 · 착륙 3줄 요약 · 쇼업 역산 알람 · 체류비 개략 가늠)이 추가되었습니다!</span>
+                <button type="button" class="btn btn-primary" style="background:#7c3aed;" data-goto="crew">🧑‍✈️ 승무원 전용 라운지(7종) 바로 열기 →</button>
+            </div>
+
+            <!-- [3-5 키즈 전용 뷰 카드] -->
+            <article id="kidsModeCard" class="card kids-hero-card hidden">
+                <div class="kids-badge">🧒 아이들을 위한 우리 가족 비행기 알림판</div>
+                <h2 id="kidsHeadline" class="kids-headline">우리 가족 비행기가 밤하늘을 슈웅~ 날아가고 있어요! ✈️✨</h2>
+                <div class="kids-flight-track">
+                    <span class="kids-stop">🏡 우리집(한국)</span>
+                    <div class="kids-bar">
+                        <div id="kidsProgressFill" class="kids-bar-fill" style="width: 30%;"></div>
+                        <span id="kidsPlanePin" class="kids-plane-pin" style="left: 30%;">✈️</span>
+                    </div>
+                    <span id="kidsDestStop" class="kids-stop">🇪🇸 스페인</span>
+                </div>
+                <p id="kidsStoryText" class="kids-story">지금 구름 위 비행기에서 멋지게 일하고 있어요. 응원 카톡을 남겨두면 쉴 때 보고 힘낼 거예요!</p>
+                <div class="kids-sleep-counter">
+                    <span id="kidsNightsLeft">🌙 코~ 두 밤만 더 자면 우리 집 현관문으로 돌아와요!</span>
+                </div>
+            </article>
+
+            <!-- 메인 핵심 카드 -->
+            <article id="mainStatusCard" class="card hero-status-card mode-unavailable">
+                <div class="hero-top-row">
+                    <div class="crew-chip">
+                        <span class="crew-emoji">🧑‍✈️</span>
+                        <div>
+                            <strong id="mainCrewTitle">김하늘 승무원</strong>
+                            <span id="mainSourceBadge" class="source-pill">Google Calendar 연동됨</span>
+                        </div>
+                    </div>
+                    <div class="hero-badges-right">
+                        <span id="fatigueShieldBadge" class="fatigue-shield-pill">🛡️ 이번 달 시차피로 주의 주간 (무리한 외출 배려)</span>
+                        <span id="mainDelayBadge" class="delay-pill hidden">⚠️ 공공API 연착 +60분 → GCal 자동연장됨</span>
+                    </div>
+                </div>
+
+                <div class="hero-center">
+                    <div id="mainStatusBadge" class="status-pill-lg">🔴 현재 비행 중 · 연락 불가</div>
+                    <h2 id="mainHeadline" class="hero-headline">지금은 하늘 위에서 비행 근무 중이에요</h2>
+                    <p id="mainSubline" class="hero-subline">KE913 (인천 → 스페인 마드리드) 탑승 중</p>
+                </div>
+
+                <div class="dual-clock-grid">
+                    <div class="clock-card">
+                        <span class="clock-flag">🇰🇷 가족 기준 (한국 KST)</span>
+                        <strong id="clockKoreaTime" class="clock-big">오후 11:30</strong>
+                        <span id="clockKoreaDate" class="clock-date">11월 21일 (토)</span>
+                    </div>
+                    <div class="clock-card local-clock">
+                        <span id="clockLocalCountry" class="clock-flag">🇪🇸 체류/목적지 (스페인 마드리드)</span>
+                        <strong id="clockLocalTime" class="clock-big">오후 03:30</strong>
+                        <span id="clockLocalDiff" class="clock-date">11월 21일 (토) · 한국보다 8시간 느림</span>
+                    </div>
+                </div>
+
+                <div id="etiquetteBox" class="etiquette-box">
+                    <div class="etiquette-icon" id="etiquetteIcon">🤫</div>
+                    <div class="etiquette-content">
+                        <strong id="etiquetteTitle">연락 가이드 · 이렇게 배려해 주세요</strong>
+                        <p id="etiquetteText">기내 안전 근무 중에는 휴대폰이 비행기 모드라 카톡·전화가 닿지 않습니다.</p>
+                    </div>
+                </div>
+
+                <div class="golden-grid">
+                    <div class="golden-item primary">
+                        <span class="golden-label">⏰ 개략적 메시지 확인 예측 시각 (KST)</span>
+                        <strong id="nextContactKst" class="golden-val">11월 22일 10:30경 이후 예상</strong>
+                        <span id="nextContactNote" class="golden-note">착륙(10:00) + 평균 수속 30분 기준 추정치</span>
+                    </div>
+                    <div class="golden-item">
+                        <span class="golden-label">👶 아이들 활동 ∩ 현지 낮 겹치는 시간 (참고용)</span>
+                        <strong id="kidsGoldenTime" class="golden-val">22일 저녁 18:00 ~ 20:30경</strong>
+                        <span id="kidsGoldenNote" class="golden-note">시차상 깨어 있을 확률이 높은 참고 구간 (통화 보장 아님)</span>
+                    </div>
+                    <div class="golden-item">
+                        <span class="golden-label">🏡 집 현관문 귀가 예측 (등하원 참고용)</span>
+                        <strong id="doorToDoorKst" class="golden-val">11월 24일 10:00경 예상</strong>
+                        <span id="doorToDoorNote" class="golden-note">인천 착륙 후 세관·도로 사정에 따라 변동 가능</span>
+                    </div>
+                </div>
+
+                <!-- 개략적 예측치 및 무부담 소통 원칙 고지 박스 (상시 노출) -->
+                <div class="soft-disclaimer-box">
+                    <span class="soft-disclaimer-badge">💡 꼭 참고해 주세요 · 무부담 소통 &amp; 개략적 예측 안내</span>
+                    <p>
+                        표시되는 모든 시간은 스케줄 기반의 <strong>단순 예측 참고치</strong>일 뿐, 연락이나 통화가 확정된 시간이 아닙니다.
+                        입국 수속 지연, 현지 이동·식사, 시차 피로 회복 등 <strong>당사자의 여건과 컨디션에 따라 가이드된 시간에도 카톡 확인이나 전화·화상통화가 어려울 수 있습니다.</strong>
+                        화상·음성통화는 먼저 카톡으로 여건을 물어보거나 당사자가 먼저 걸어올 때 진행해 주시고, 답장이 없더라도 안심하고 기다려 주세요 💛
+                    </p>
+                </div>
+            </article>
+
+            <div class="main-bottom-grid hide-on-kids">
+                <article class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">🛫 Google Calendar 전후 스케줄 &amp; 육아 분담</h3>
+                            <p class="card-sub">현재 시점과 가장 가까운 앞뒤 비행·체류·등하원 분담 일정입니다.</p>
+                        </div>
+                        <button type="button" class="btn btn-outline hide-on-grandparents" data-goto="schedule">월간 전체 보기 →</button>
+                    </div>
+                    <div id="nearbyScheduleList" class="timeline-list"></div>
+                </article>
+
+                <article class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">💌 비행 중인 승무원(파트너)에게 남기는 '착륙 3줄 브리핑'</h3>
+                            <p class="card-sub">배우자·연인이나 부모님이 여기에 적어두면, 착륙 직후 카톡 100개를 뒤지지 않고도 소식을 10초 만에 확인합니다.</p>
+                        </div>
+                    </div>
+                    <form id="familyDigestForm" class="settings-form" style="margin-top:4px;">
+                        <div class="form-row">
+                            <label for="dgKids">👶 아이들 오늘 컨디션 &amp; 식사</label>
+                            <input type="text" id="dgKids" value="첫째·둘째 모두 열 없이 하원 완료! 저녁 카레 한 그릇 뚝딱 했어~">
+                        </div>
+                        <div class="form-row">
+                            <label for="dgSchool">🎒 어린이집 내일 준비물 / 등하원 체크</label>
+                            <input type="text" id="dgSchool" value="내일 둘째 체육복 입는 날 (거실 소파에 미리 꺼내둠 · 배우자 등원 예정)">
+                        </div>
+                        <div class="form-row">
+                            <label for="dgMemo">💬 가족 한줄 안부</label>
+                            <input type="text" id="dgMemo" value="집은 아무 걱정 말고 호텔 도착하면 푹 쉬어! 연락은 편할 때 천천히 줘도 돼💛">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">착륙 브리핑 보드에 업데이트</button>
+                            <span id="digestSaveMsg" class="save-msg"></span>
+                        </div>
+                    </form>
+                </article>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2 (NEW!): 승무원 본인 전용 라운지 (7대 기능 총집합) ================= -->
+        <section id="tab-crew" class="tab-panel">
+            <!-- 기능 1: 원터치 생존신고 & 상태 오버라이드 3종 -->
+            <article class="card crew-override-card">
+                <div class="card-header" style="margin-bottom:10px;">
+                    <div>
+                        <span class="crew-exclusive-chip">승무원 전용 기능 ① · 카톡 타이핑 해방</span>
+                        <h2 class="card-title" style="font-size:20px;">⚡ 원터치 생존신고 &amp; 내 컨디션 우선 오버라이드</h2>
+                        <p class="card-sub">착륙 직후 지친 상태에서 배우자·연인·부모님께 일일이 카톡 칠 필요 없이 버튼 하나만 누르세요. 가족 화면과 카톡 안내봇 응답이 즉시 바뀝니다.</p>
+                    </div>
+                    <button type="button" id="btnClearOverride" class="btn btn-ghost hidden">🔄 스케줄 자동 계산으로 복귀</button>
+                </div>
+
+                <div class="override-btn-grid">
+                    <button type="button" class="ov-btn landed" data-override="LANDED">
+                        <span class="ov-icon">🛬</span>
+                        <strong>무사 착륙! 이동 중</strong>
+                        <small>"방금 잘 내렸어~ 입국심사하고 호텔 이동할게!"</small>
+                    </button>
+                    <button type="button" class="ov-btn sleeping" data-override="SLEEP_NOW">
+                        <span class="ov-icon">😴</span>
+                        <strong>지금부터 잘게 (방해금지 ON)</strong>
+                        <small>스케줄 무관 즉시 '수면 보호' 전환 (+6시간 기상예정)</small>
+                    </button>
+                    <button type="button" class="ov-btn callme" data-override="CALL_ME">
+                        <span class="ov-icon">💬</span>
+                        <strong>지금 잠깐 여유 생겼어! (안부 핑)</strong>
+                        <small>내가 원할 때만 가족에게 가볍게 카톡/소통 여유 신호 보내기</small>
+                    </button>
+                </div>
+                <div id="overrideFeedbackBar" class="override-feedback hidden"></div>
+            </article>
+
+            <!-- 2단 그리드: 좌측 (착륙 3줄 브리핑 + 거꾸로 우리집 시계 + 쇼업 역산 알람) / 우측 (스케줄 맞교환 체커 + 날씨/장바구니 + 피로도/체류비) -->
+            <div class="proto-grid">
+                <div class="proto-col">
+                    <!-- 기능 4: 거꾸로 보는 한국 우리집 현재 일상 시계 -->
+                    <article class="card">
+                        <span class="crew-exclusive-chip">승무원 전용 기능 ④ · 타지 호텔에서의 안심 시계</span>
+                        <h3 class="card-title">🏡 거꾸로 보는 '지금 한국 우리 집' 일상 시계</h3>
+                        <p class="card-sub">해외 호텔에서 눈 떴을 때 "지금 한국은 몇 시지? 애들 어린이집 갔나?" 헷갈리지 않도록 가족의 현재 루틴을 보여줍니다.</p>
+                        <div class="reverse-home-box">
+                            <div class="rh-top">
+                                <span id="rhKoreaClock" class="rh-clock">🇰🇷 한국 오후 11:30</span>
+                                <span id="rhStatusPill" class="lg-badge layover">우리집 현재 루틴</span>
+                            </div>
+                            <strong id="rhHeadline" class="rh-headline">🌙 한국 우리 집 식구들 모두 불 끄고 코~ 자는 깊은 밤이에요</strong>
+                            <p id="rhSub" class="rh-sub">급한 용건이 아니면 아침 07:30 기상 이후에 카톡이나 전화를 걸면 좋아요.</p>
+                        </div>
+                    </article>
+
+                    <!-- 기능 3: 비행기 모드 해제 직후 보는 우리집 3줄 요약 브리핑 -->
+                    <article class="card">
+                        <span class="crew-exclusive-chip">승무원 전용 기능 ③ · Landing Digest</span>
+                        <h3 class="card-title">💌 착륙 직후 보는 '우리 집 3줄 요약 브리핑'</h3>
+                        <p class="card-sub">비행 중 쌓인 단톡방 카톡 100개를 다 읽지 않아도, 배우자·연인·부모님이 남겨둔 핵심 브리핑만 바로 확인하세요.</p>
+                        <div class="digest-board">
+                            <div class="digest-row">
+                                <span class="dg-badge">👶 아이들 상태</span>
+                                <p id="crewViewDgKids"></p>
+                            </div>
+                            <div class="digest-row">
+                                <span class="dg-badge">🎒 등원·준비물</span>
+                                <p id="crewViewDgSchool"></p>
+                            </div>
+                            <div class="digest-row">
+                                <span class="dg-badge">💬 가족 안부</span>
+                                <p id="crewViewDgMemo"></p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 기능 5: 쇼업(Show-up) 역산 알람 & 인천공항 출근길 교통 -->
+                    <article class="card">
+                        <span class="crew-exclusive-chip">승무원 전용 기능 ⑤ · No-Show 방지 출근 비서</span>
+                        <h3 class="card-title">🚗 다음 비행 '쇼업(Show-up) 역산 알람' &amp; 공항 교통</h3>
+                        <p class="card-sub">Google Calendar의 비행 출발 시각(STD)에서 브리핑 쇼업·주차·도로 정체를 역산해 <strong>현관문 출발 데드라인</strong>을 잡아줍니다.</p>
+                        <div id="showupCalcBox" class="showup-box"></div>
+                    </article>
+                </div>
+
+                <div class="proto-col">
+                    <!-- 기능 2: 동료와 스케줄 체인지(비행 맞교환) 1초 충돌 시뮬레이터 -->
+                    <article class="card highlight-border-card">
+                        <span class="crew-exclusive-chip">승무원 전용 기능 ② · 사내 게시판 스왑 즉시 의사결정</span>
+                        <h3 class="card-title">🔄 동료와 '비행 맞교환(스왑)' 가족 일정 충돌 1초 체커</h3>
+                        <p class="card-sub">배우자나 부모님께 일일이 연락해 물어보지 않아도, 바꾸려는 후보 비행 일시를 넣으면 배우자 사내 캘린더·부모님 일정과 겹치는지 즉시 판별합니다.</p>
+
+                        <div class="swap-presets">
+                            <button type="button" class="btn btn-outline swap-preset-btn" data-swap="safe">🧪 후보 A 테스트: 11/28~29 오사카 (충돌 없음)</button>
+                            <button type="button" class="btn btn-outline swap-preset-btn" data-swap="conflict">🧪 후보 B 테스트: 11/19~20 방콕 (배우자 배포+부모님 병원 충돌!)</button>
+                        </div>
+
+                        <div class="settings-form" style="margin-top:10px;">
+                            <div class="form-row-2">
+                                <div>
+                                    <label for="swapStart">바꿔올 후보 비행 시작 (KST)</label>
+                                    <input type="datetime-local" id="swapStart" value="2026-11-19T09:00">
+                                </div>
+                                <div>
+                                    <label for="swapEnd">바꿔올 후보 비행 귀국 (KST)</label>
+                                    <input type="datetime-local" id="swapEnd" value="2026-11-20T18:00">
+                                </div>
+                            </div>
+                            <button type="button" id="btnCheckSwap" class="btn btn-primary">🔍 배우자 사내캘린더 &amp; 부모님 일정 충돌 검사</button>
+                        </div>
+                        <div id="swapResultBox" class="swap-result-box"></div>
+                    </article>
+
+                    <!-- 기능 6: 체류지 날씨·복장 비교 & 가족 심부름(면세/마트) 체크리스트 -->
+                    <article class="card">
+                        <span class="crew-exclusive-chip">승무원 전용 기능 ⑥ · Layover Kit &amp; 공유 장바구니</span>
+                        <h3 class="card-title">🌦️ 체류지 사복 날씨 가이드 &amp; 면세/현지 심부름 메모</h3>
+                        <div id="layoverWeatherBox" class="weather-strip"></div>
+
+                        <div class="shopping-section">
+                            <strong class="shop-title">🛍️ 이번 비행 가족 심부름 &amp; 면세점 체크리스트</strong>
+                            <div id="shoppingListContainer" class="shop-list"></div>
+                            <form id="shoppingAddForm" class="url-input-group" style="margin-top:8px;">
+                                <input type="text" id="shoppingInput" placeholder="예: 스페인 라치나타 올리브유 / 아이들 비타민 추가...">
+                                <button type="submit" class="btn btn-outline">+ 추가</button>
+                            </form>
+                        </div>
+                    </article>
+
+                    <!-- 기능 7: 월간 비행 피로도 지수 & 체류 수당(Per Diem) 가늠치 -->
+                    <article class="card">
+                        <span class="crew-exclusive-chip">승무원 전용 기능 ⑦ · 컨디션 방패 &amp; 체류비 가늠</span>
+                        <h3 class="card-title">📊 11월 시차 피로도 추정 &amp; 체류비(퍼디엠) 개략 가늠치</h3>
+                        <p class="card-sub">피로도가 높은 주간에는 가족 화면에 <strong>'무리한 외출 자제 배려 배지'</strong>를 띄워주며, 이번 달 체류비 규모를 대략 가늠해 봅니다.</p>
+                        <div id="fatiguePerDiemBox" class="perdiem-grid"></div>
+                        <div class="perdiem-disclaimer">
+                            <strong>📌 퍼디엠(체류비) 예측 산출 조건 및 안내</strong><br>
+                            • <strong>산출 가정</strong>: 캘린더상 단순 체류 시간(착륙~귀국 출발) × 권역별 임의 평균 단가(미주 $4.8/h · 유럽 $4.2/h · 아시아 $3.5/h 가정) × 참고 환율(1,390원/$)로 계산한 <strong>개략적 예측치</strong>입니다.<br>
+                            • <strong>유의사항</strong>: 항공사별 지급 기준(직급, 특지/갑지 등급, 램프인·아웃 시간, 식대 공제, 급여일 사내 고시환율 등)에 따라 <strong>실제 급여 정산 금액과는 다를 수 있습니다.</strong>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: 월간 전체 스케줄 & 사내 캘린더 재발행 ================= -->
+        <section id="tab-schedule" class="tab-panel">
+            <div class="card schedule-header-card">
+                <div class="schedule-header-top">
+                    <div>
+                        <span class="section-chip">[3-2 적용] 승무원 Google Calendar 수집 → 배우자·파트너 캘린더 재발행</span>
+                        <h2 class="section-title">📅 2026년 11월 전체 스케줄 &amp; 공동육아 로스터</h2>
+                        <p class="card-sub">승무원의 Google Calendar 일정을 공공API 연착·돌봄 주의(<code>⚠️스탠바이·야근주의</code>)가 보강된 <strong>배우자·파트너용 Outlook/Google 구독 피드(.ics)</strong>로 내보냅니다.</p>
+                    </div>
+                    <div class="ical-action-box">
+                        <button type="button" id="btnDownloadIcs" class="btn btn-primary">📥 보강된 사내캘린더 .ics 내보내기</button>
+                        <button type="button" id="btnCopyIcalUrl" class="btn btn-outline">🔗 파트너 캘린더 구독 URL 복사</button>
+                        <span id="icalCopyMsg" class="save-msg"></span>
+                    </div>
+                </div>
+
+                <div id="monthSummaryStats" class="month-stats"></div>
+            </div>
+
+            <div class="schedule-layout">
+                <article class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🗓️ 11월 캘린더 (날짜 클릭 시 우측 필터)</h3>
+                        <button type="button" id="btnClearDateFilter" class="btn btn-ghost hidden">전체 보기</button>
+                    </div>
+                    <div class="schedule-legend" style="margin-bottom:10px;">
+                        <span class="lg-badge flight">✈️ 비행</span>
+                        <span class="lg-badge layover">🌍 해외체류</span>
+                        <span class="lg-badge standby">📋 스탠바이(돌발출동주의)</span>
+                        <span class="lg-badge off">🏠 휴무</span>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid"></div>
+                </article>
+
+                <article class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 id="scheduleListTitle" class="card-title">📋 Google Calendar 동기화 전체 일정 목록</h3>
+                            <p class="card-sub">항공편명이 없는 스탠바이·체류·휴무 일정도 개략 시간과 육아 분담 메모로 함께 관리됩니다.</p>
+                        </div>
+                        <button type="button" class="btn btn-primary" data-goto="settings">+ .ics 가져오기 / 일정 추가</button>
+                    </div>
+                    <div id="fullScheduleList" class="full-schedule-list"></div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 4: 초간단 2-Step 설정 (설정은 간단하게, 사용은 쉽게!) ================= -->
+        <section id="tab-settings" class="tab-panel">
+            <div class="card easy-setup-banner">
+                <div>
+                    <span class="section-chip">ZERO-FRICTION UX · 설정은 간단하게, 사용은 쉽게</span>
+                    <h2 class="section-title">⚡ 딱 2단계면 끝나는 초간단 시작 설정</h2>
+                    <p class="card-sub">복잡한 시차·수속 시간·회복 수면 계산은 이미 최적의 기본값으로 세팅되어 있습니다. <strong>① Google Calendar만 연결하고 ② 가족 링크만 복사해 보내면 바로 끝납니다!</strong></p>
+                </div>
+            </div>
+
+            <!-- 기본 노출: 누구나 30초 만에 끝내는 핵심 2개 카드만 배치 -->
+            <div class="settings-grid">
+                <article class="card highlight-border-card">
+                    <span class="section-chip">STEP 1 · 캘린더 연결 (둘 중 편한 방법 1개만!)</span>
+                    <h3 class="card-title">📅 Google Calendar 스케줄 연결하기</h3>
+                    <p class="card-sub">내보낸 <code>.ics</code> 파일 하나만 툭 올리거나, 비공개 주소 한 줄만 붙여넣으면 매달 비행·체류·스탠바이 일정이 자동으로 정리됩니다.</p>
+
+                    <div class="settings-form">
+                        <div class="roster-dropzone" id="icsUploadDropzone">
+                            <input type="file" id="icsFileInput" accept=".ics,text/calendar" class="hidden">
+                            <span>📂 <strong>방법 A: Google Calendar 내보내기(.ics) 파일 올리기</strong><br><small>클릭해서 파일만 선택하면 끝! (편명·날짜·체류지 자동 인식)</small></span>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="btnLoadSampleIcs" class="btn btn-outline">🧪 원클릭 샘플(.ics) 자동 등록 체험</button>
+                            <span id="icsParseMsg" class="save-msg"></span>
+                        </div>
+
+                        <div class="form-row" style="margin-top:4px;">
+                            <label for="cfgCalSecretUrl">🔗 방법 B: Google Calendar '비공개 iCal 주소' 한 번만 등록 (이후 무조작 자동 반영)</label>
+                            <div class="url-input-group">
+                                <input type="url" id="cfgCalSecretUrl" value="https://calendar.google.com/calendar/ical/haneul.crew%40gmail.com/private-8a9b7c6d/basic.ics">
+                                <button type="button" id="btnSyncCalUrl" class="btn btn-primary">연결 완료</button>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="card security-card">
+                    <span class="future-chip">STEP 2 · 가족 공유 (앱 설치·회원가입 없음!)</span>
+                    <h3 class="card-title">💌 가족별 맞춤 안심 링크 카톡으로 보내기</h3>
+                    <p class="card-sub">배우자·연인·부모님·아이들 모두 회원가입 없이 링크만 누르면 각자 눈높이에 맞는 화면(큰글씨 뷰 등)으로 바로 열립니다.</p>
+
+                    <div id="tokenListContainer" class="token-list"></div>
+
+                    <div class="security-footer">
+                        <button type="button" id="btnRotateTokens" class="btn btn-outline">🔄 링크 보안 재발급 (외부 유출 의심 시)</button>
+                        <span id="tokenActionMsg" class="save-msg"></span>
+                    </div>
+                </article>
+            </div>
+
+            <!-- 복잡한 세부 설정·수동 입력·Add-on은 접이식 고급 설정으로 숨겨 화면 단순화 -->
+            <details class="advanced-accordion">
+                <summary>⚙️ <strong>세부 고급 설정 열기</strong> (수동 일정 직접 추가 · 수속/귀가 버퍼 미세조정 · Google Calendar 부가기능 미리보기)</summary>
+                <div class="settings-grid" style="margin-top:16px;">
+                    <div class="proto-col">
+                        <article class="card">
+                            <span class="api-chip">선택사항 · 기본값으로도 충분해요</span>
+                            <h3 class="card-title">🧑‍✈️ 호칭 및 수속/귀가/수면 예측 버퍼 미세조정</h3>
+                            <form id="profileForm" class="settings-form">
+                                <div class="form-row-2">
+                                    <div>
+                                        <label for="cfgCrewName">승무원 호칭 / 이름</label>
+                                        <input type="text" id="cfgCrewName" value="김하늘 승무원" required>
+                                    </div>
+                                    <div>
+                                        <label for="cfgArrivalBuffer">착륙 후 평균 수속 버퍼 (분)</label>
+                                        <input type="number" id="cfgArrivalBuffer" value="30" min="0" max="180">
+                                    </div>
+                                </div>
+                                <div class="form-row-2">
+                                    <div>
+                                        <label for="cfgCommuteBuffer">인천 착륙 → 집 귀가 예측 (분)</label>
+                                        <input type="number" id="cfgCommuteBuffer" value="120" min="30" max="300">
+                                    </div>
+                                    <div>
+                                        <label for="cfgRestHours">장거리 직후 수면 보호 (시간)</label>
+                                        <input type="number" id="cfgRestHours" value="5" min="0" max="12">
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">버퍼 설정 저장</button>
+                                    <button type="button" id="btnResetAllDemo" class="btn btn-ghost">초기 데모 복원</button>
+                                    <span id="profileSaveMsg" class="save-msg"></span>
+                                </div>
+                            </form>
+                        </article>
+
+                        <article class="card addon-card">
+                            <span class="docs-chip">확장 기능 · Google Calendar 부가기능 (Add-on)</span>
+                            <h3 class="card-title">🧩 구글 캘린더 사이드바에서 등하원 담당 바로 찍기</h3>
+                            <div class="gcal-addon-mock">
+                                <div class="gcal-addon-head">
+                                    <span>📅 Google Calendar 우측 부가기능 미리보기</span>
+                                    <span class="addon-live">● 양방향 연결됨</span>
+                                </div>
+                                <div class="gcal-addon-body">
+                                    <div class="addon-selected-ev">선택된 일정: <strong>KE914 스페인 출발 → 인천 도착 (11/24 08:00)</strong></div>
+                                    <div class="form-row-2" style="margin-top:8px;">
+                                        <div>
+                                            <label for="addonDropoff">오전 등원 담당</label>
+                                            <select id="addonDropoff">
+                                                <option value="❤️ 파트너 등원">❤️ 파트너 (배우자·연인)</option>
+                                                <option value="부모님 등원">🏡 부모님 등원 지원</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="addonPickup">오후 하원 담당</label>
+                                            <select id="addonPickup">
+                                                <option value="10시 귀가 후 직접 하원">🧑‍✈️ 승무원 귀가 후 전담</option>
+                                                <option value="연착 대비 부모님 오후 하원 대기">🏡 부모님 하원 백업</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions" style="margin-top:10px;">
+                                        <button type="button" id="btnApplyAddonComm" class="btn btn-primary">💬 가족 보드에 반영</button>
+                                        <span id="addonCommMsg" class="save-msg"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="proto-col">
+                        <article class="card">
+                            <span class="api-chip">선택사항 · 캘린더 외 임시 일정 추가</span>
+                            <h3 class="card-title">✍️ 수동 날짜/체류 개별 등록 (항공편명 없어도 가능)</h3>
+                            <form id="manualAddForm" class="settings-form">
+                                <div class="form-row-2">
+                                    <div>
+                                        <label for="manType">일정 구분</label>
+                                        <select id="manType">
+                                            <option value="FLIGHT">✈️ 비행 (항공편 운항)</option>
+                                            <option value="LAYOVER">🌍 해외/지방 체류 (편명 없음)</option>
+                                            <option value="STANDBY">📋 스탠바이 대기 (편명 미정)</option>
+                                            <option value="TRAINING">🎓 안전교육 / 지상근무</option>
+                                            <option value="OFF">🏠 휴무 (OFF)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="manFlightId">항공편명 (없으면 비움)</label>
+                                        <input type="text" id="manFlightId" placeholder="예: KE913 (선택)">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label for="manCountry">위치 / 목적지 국가</label>
+                                    <select id="manCountry">
+                                        <option value="KR">🇰🇷 한국 (서울/인천 · Asia/Seoul)</option>
+                                        <option value="ES">🇪🇸 스페인 (마드리드 · Europe/Madrid)</option>
+                                        <option value="JP">🇯🇵 일본 (도쿄 · Asia/Tokyo)</option>
+                                        <option value="US">🇺🇸 미국 동부 (뉴욕 · America/New_York)</option>
+                                        <option value="FR">🇫🇷 프랑스 (파리 · Europe/Paris)</option>
+                                        <option value="VN">🇻🇳 베트남 (다낭/하노이 · Asia/Ho_Chi_Minh)</option>
+                                    </select>
+                                </div>
+                                <div class="form-row-2">
+                                    <div>
+                                        <label for="manStart">시작 일시 (KST)</label>
+                                        <input type="datetime-local" id="manStart" value="2026-11-27T09:00" required>
+                                    </div>
+                                    <div>
+                                        <label for="manEnd">종료 일시 (KST)</label>
+                                        <input type="datetime-local" id="manEnd" value="2026-11-27T18:00" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label for="manTitle">일정 설명</label>
+                                    <input type="text" id="manTitle" placeholder="예: 자택 스탠바이 또는 마드리드 체류" required>
+                                </div>
+                                <div class="form-row">
+                                    <label for="manNote">공동육아 분담 메모</label>
+                                    <input type="text" id="manNote" placeholder="예: 배우자 등원 / 부모님 오후 하원">
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">+ 수동 추가</button>
+                                    <span id="manAddMsg" class="save-msg"></span>
+                                </div>
+                            </form>
+
+                            <div class="manage-divider">
+                                <strong>현재 등록된 캘린더 일정 (<span id="registeredCount">0</span>건)</strong>
+                                <button type="button" id="btnClearSetupTest" class="btn btn-ghost" style="padding:4px 9px;font-size:11.5px;">미설정 배너 토글</button>
+                            </div>
+                            <div id="manageScheduleList" class="manage-list"></div>
+                        </article>
+                    </div>
+                </div>
+            </details>
+        </section>
+
+        <!-- ================= PAGE 5: 카톡봇 시뮬레이터 & 제안서 PDF 다운로드 ================= -->
+        <section id="tab-extra" class="tab-panel">
+            <div class="card pdf-banner-card">
+                <div>
+                    <span class="section-chip">PORTFOLIO &amp; TECHNICAL PROPOSAL PDF (v3.6 · 9 Pages Synced)</span>
+                    <h3 class="card-title">📑 CrewPing 서비스 기획 &amp; 양방향 컨시어지 아키텍처 제안서 (PDF)</h3>
+                    <p class="card-sub">초간단 2-Step 설정 · 무부담 소통 원칙 · 승무원 7대 기능(체류비 가늠치 조건 포함) · Google Calendar 양방향 연동 · 4-Role 뷰가 웹과 100% 동일하게 반영된 제안서입니다.</p>
+                </div>
+                <a href="CrewPing_포트폴리오_제안서.pdf" target="_blank" class="btn btn-primary" style="text-decoration:none;">📄 포트폴리오 제안서 PDF 열기</a>
+            </div>
+
+            <div class="proto-grid">
+                <article class="card kakao-card">
+                    <div class="card-header">
+                        <div>
+                            <span class="future-chip">카카오 i 오픈빌더 연동 프로토타입</span>
+                            <h3 class="card-title">💬 가족 카카오톡 자동 응답 봇</h3>
+                            <p class="card-sub">승무원 원터치 오버라이드 상태 및 시뮬레이션 시각(<strong id="kakaoSimTimeRef"></strong>)을 실시간 반영해 답변합니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="kakao-phone">
+                        <div class="kakao-top">
+                            <span class="kakao-room-title">✈️ 김하늘 승무원 가족 안내봇</span>
+                            <span class="kakao-status-pill">승무원 원터치 연동</span>
+                        </div>
+                        <div id="kakaoMessages" class="kakao-messages"></div>
+                        <div class="kakao-quick-asks">
+                            <button type="button" class="quick-ask-btn" data-ask="지금 카톡 남겨도 괜찮을까?">지금 카톡 남겨도 될까?</button>
+                            <button type="button" class="quick-ask-btn" data-ask="거기 지금 몇 시야? 쉬고 있어?">거기 몇 시야? 쉬고 있어?</button>
+                            <button type="button" class="quick-ask-btn" data-ask="애들 깨어있을 때랑 시차 겹치는 시간이 언제야?">애들이랑 시차 겹치는 시간은?</button>
+                            <button type="button" class="quick-ask-btn" data-ask="귀국 비행기 연착 없지? 집에 몇 시쯤 와?">귀국편 연착 없지? 집 도착 시간은?</button>
+                        </div>
+                        <form id="kakaoForm" class="kakao-input-row">
+                            <select id="kakaoSender" aria-label="발신 가족">
+                                <option value="❤️ 파트너">❤️ 파트너 (배우자·연인)</option>
+                                <option value="🏡 부모님">🏡 부모님</option>
+                                <option value="첫째(6세)">🧒 첫째</option>
+                            </select>
+                            <input type="text" id="kakaoInput" placeholder="카톡 메시지를 입력해 보세요..." autocomplete="off">
+                            <button type="submit" class="kakao-send-btn">전송</button>
+                        </form>
+                    </div>
+                </article>
+
+                <div class="proto-col">
+                    <article class="card">
+                        <span class="api-chip">Google Calendar API × data.go.kr #15095074</span>
+                        <h3 class="card-title">📡 양방향 캘린더 패치 &amp; 운항 현황 실시간 모니터</h3>
+                        <p class="card-sub">공공 API 연착 감지 및 승무원 수동 오버라이드 이벤트를 통합 추적합니다.</p>
+                        <pre id="apiJsonPreview" class="code-preview"></pre>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <span>CrewPing (크루핑) — 승무원과 가족 모두를 위한 Google Calendar 양방향 컨시어지</span>
+            <span>4-Role View (승무원 · 배우자/연인 · 부모님 · 키즈) · HMAC-SHA256 Signed Token · IANA DST 보정</span>
+        </div>
+    </footer>
+
+    <script src="app.js?v=3.6"></script>
+</body>
+</html>

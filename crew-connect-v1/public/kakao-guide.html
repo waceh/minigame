@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="robots" content="noindex, nofollow">
+    <title>CrewPing — 카카오톡 세팅 상세 가이드</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css?v=2.1">
+    <style>
+        .k-shell {
+            padding-bottom: 44px;
+        }
+        .k-hero {
+            background: linear-gradient(145deg, #3b1e1e 0%, #1e293b 100%);
+            color: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 22px 18px;
+        }
+        .k-badge {
+            display: inline-block;
+            font-size: 11.5px;
+            font-weight: 800;
+            background: #fee500;
+            color: #191919;
+            padding: 4px 11px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+        }
+        .k-hero h2 {
+            font-size: 20.5px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.35;
+            margin-bottom: 6px;
+            word-break: keep-all;
+        }
+        .k-hero p {
+            font-size: 13.5px;
+            color: #e2e8f0;
+            line-height: 1.55;
+            word-break: keep-all;
+        }
+        .k-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            padding: 17px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+        .k-card.highlight {
+            border: 1.5px solid #facc15;
+            background: linear-gradient(180deg, #fefce8 0%, #ffffff 38%);
+        }
+        .k-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .k-step-pill {
+            font-size: 11.5px;
+            font-weight: 800;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 3px 9px;
+            border-radius: 999px;
+            flex-shrink: 0;
+        }
+        .k-step-pill.kakao {
+            background: #fee500;
+            color: #191919;
+        }
+        .k-head h3 {
+            font-size: 15.5px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            word-break: keep-all;
+        }
+        .k-desc {
+            font-size: 13.5px;
+            color: var(--sub);
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+        .k-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .k-item {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 11px;
+            padding: 11px 12px;
+            font-size: 13px;
+            color: var(--text);
+            line-height: 1.58;
+            word-break: keep-all;
+        }
+        .k-item strong {
+            color: #1d4ed8;
+        }
+        .k-tip {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 11px;
+            padding: 11px 12px;
+            font-size: 12.5px;
+            color: #1e3a8a;
+            line-height: 1.55;
+        }
+        .code-box {
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12px;
+            padding: 11px 12px;
+            border-radius: 10px;
+            word-break: break-all;
+            line-height: 1.45;
+        }
+        .ext-link-btn {
+            display: inline-block;
+            text-decoration: none;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            font-size: 12.5px;
+            font-weight: 800;
+            padding: 8px 12px;
+            border-radius: 9px;
+            text-align: center;
+        }
+        .kakao-btn {
+            border: none;
+            background: #fee500;
+            color: #191919;
+            font-size: 13.5px;
+            font-weight: 800;
+            padding: 11px 14px;
+            border-radius: 11px;
+            cursor: pointer;
+        }
+        .quick-reply-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .qr-chip {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            border-radius: 999px;
+            padding: 5px 11px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #1e293b;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell k-shell">
+        <header class="app-bar">
+            <div class="app-brand">
+                <span class="brand-dot" style="background:#eab308;"></span>
+                <h1>카카오톡 세팅 가이드</h1>
+            </div>
+            <div class="app-actions">
+                <a id="btnBackToGuide" href="./guide?mode=crew" class="chip-btn" style="text-decoration:none; color:#0f172a;">← 이전 가이드</a>
+            </div>
+        </header>
+
+        <main class="view active">
+            <section class="k-hero">
+                <span class="k-badge">💬 KakaoTalk 연동 매뉴얼</span>
+                <h2>가족 단톡방 공지 고정부터<br>자동응답 챗봇 연결까지 한 번에!</h2>
+                <p>CrewPing 서버에는 이미 카카오 스킬 웹훅이 내장되어 있습니다. 아래 두 가지 방법 중 상황에 맞는 방식을 골라 세팅해 보세요.</p>
+            </section>
+
+            <!-- 방법 1: 10초 완료 단톡방 공지 고정 -->
+            <section class="k-card highlight">
+                <div class="k-head">
+                    <span class="k-step-pill kakao">방법 1 · 세팅 0분</span>
+                    <h3>가족 단톡방 · 1:1 카톡방 ‘공지’ 고정 (가장 간편)</h3>
+                </div>
+                <p class="k-desc">별도 채널 개설 없이 지금 바로 쓸 수 있어 가장 많이 활용하는 방식입니다.</p>
+                <div class="k-list">
+                    <div class="k-item">
+                        <strong>1.</strong> 아래 버튼을 눌러 <strong>가족 공유 전용 주소</strong>를 복사한 뒤, 파트너·부모님 카톡방에 전송합니다.
+                    </div>
+                    <div class="k-item">
+                        <strong>2.</strong> 보낸 링크 말풍선을 길게 눌러 <strong>[공지]</strong>로 등록합니다.
+                    </div>
+                    <div class="k-item">
+                        <strong>3.</strong> 가족들은 언제든 카톡방 상단 공지만 터치하면 카톡 안에서 현재 비행/휴식 신호등과 일정을 바로 확인할 수 있습니다.
+                    </div>
+                </div>
+                <button type="button" id="btnCopyFamilyLinkHere" class="kakao-btn">❤️ 가족 공유용 링크 복사하기</button>
+                <span id="copyFamilyToast" class="toast-inline"></span>
+            </section>
+
+            <!-- 방법 2: 카카오 챗봇 자동응답 연결 -->
+            <section class="k-card">
+                <div class="k-head">
+                    <span class="k-step-pill">방법 2 · 약 10분</span>
+                    <h3>카톡으로 물어보면 자동 대답하는 챗봇 만들기 (개인 무료)</h3>
+                </div>
+                <p class="k-desc">
+                    링크를 누르는 대신 카톡 채팅창에 <strong>“지금 통화 돼?”, “어디야?”, “다음 비행 언제야?”</strong>라고 치면 봇이 실시간으로 답장해 주는 방식입니다. 사업자등록증 없이 일반 개인도 무료로 개설할 수 있습니다. (PC 진행 권장)
+                </p>
+            </section>
+
+            <!-- STEP 1 -->
+            <section class="k-card">
+                <div class="k-head">
+                    <span class="k-step-pill">STEP 1</span>
+                    <h3>무료 개인 카카오톡 채널 만들기 (3분)</h3>
+                </div>
+                <div class="k-list">
+                    <div class="k-item">
+                        <strong>1.</strong> 카카오 계정으로 <strong>카카오톡 채널 관리자센터</strong>에 로그인한 뒤 <strong>[+ 새 채널 만들기]</strong>를 클릭합니다. (사업자 인증 없는 일반 개인 채널로 즉시 생성 가능)
+                    </div>
+                    <div class="k-item">
+                        <strong>2.</strong> 채널 이름(예: <code>민지 비행알리미</code>)과 검색용 아이디를 입력해 개설을 완료합니다.
+                    </div>
+                </div>
+                <div class="k-tip">
+                    🔒 <strong>프라이버시 보호 팁:</strong> 가족끼리만 비공개로 쓰시려면 채널 관리자센터 좌측 <strong>[프로필] → [프로필 설정]</strong>에서 <strong>‘검색 허용’을 OFF</strong>로 꺼두시고, 가족에게만 채팅방 링크를 전달하세요. 외부인은 검색해도 절대 찾을 수 없습니다.
+                </div>
+                <a href="https://center-pf.kakao.com/" target="_blank" rel="noopener" class="ext-link-btn">🔗 카카오톡 채널 관리자센터 열기 ↗</a>
+            </section>
+
+            <!-- STEP 2 -->
+            <section class="k-card">
+                <div class="k-head">
+                    <span class="k-step-pill">STEP 2</span>
+                    <h3>카카오 챗봇 관리자센터(오픈빌더) 봇 생성 (2분)</h3>
+                </div>
+                <div class="k-list">
+                    <div class="k-item">
+                        <strong>1.</strong> <strong>카카오 챗봇 관리자센터</strong>에 접속해 로그인합니다. (최초 가입 시 오픈빌더 권한 신청이 뜨면 ‘개인/테스트’ 목적으로 신청 시 빠르게 승인됩니다.)
+                    </div>
+                    <div class="k-item">
+                        <strong>2.</strong> <strong>[챗봇 만들기]</strong> 클릭 → 봇 이름 입력 → 방금 STEP 1에서 만든 <strong>카카오톡 채널을 선택해 연결</strong>합니다.
+                    </div>
+                </div>
+                <a href="https://chatbot.kakao.com/" target="_blank" rel="noopener" class="ext-link-btn">🔗 카카오 챗봇 관리자센터(chatbot.kakao.com) 열기 ↗</a>
+            </section>
+
+            <!-- STEP 3 -->
+            <section class="k-card">
+                <div class="k-head">
+                    <span class="k-step-pill">STEP 3</span>
+                    <h3>CrewPing 스킬(Webhook) 주소 등록하기 (2분)</h3>
+                </div>
+                <div class="k-list">
+                    <div class="k-item">
+                        <strong>1.</strong> 챗봇 관리자센터 좌측 메뉴 <strong>[스킬]</strong> 클릭 → 우측 상단 <strong>[+ 스킬 만들기]</strong> 버튼을 클릭합니다.
+                    </div>
+                    <div class="k-item">
+                        <strong>2.</strong> 스킬 이름에 <code>CrewPing 상태조회</code>를 적고, <strong>URL 칸</strong>에 아래 주소를 그대로 복사해 붙여넣은 뒤 <strong>[저장]</strong>을 누릅니다.
+                    </div>
+                </div>
+                <div id="skillUrlCode" class="code-box"></div>
+                <button type="button" id="btnCopySkillUrl" class="primary-btn">📋 내 전용 스킬 URL 복사하기</button>
+                <span id="copySkillToast" class="toast-inline"></span>
+            </section>
+
+            <!-- STEP 4 -->
+            <section class="k-card">
+                <div class="k-head">
+                    <span class="k-step-pill">STEP 4</span>
+                    <h3>‘폴백 블록’에 스킬 연결하기 (2분 · 핵심 꿀팁!)</h3>
+                </div>
+                <p class="k-desc">
+                    예상 질문을 일일이 등록할 필요 없이 <strong>‘폴백 블록’</strong>에 연결해 두면, 부모님이 <code>“자니?”</code>, <code>“어디야”</code>, <code>“ㅇㅇ”</code> 등 <strong>무슨 말을 입력하셔도 봇이 찰떡같이 현재 상태를 대답</strong>해 줍니다!
+                </p>
+                <div class="k-list">
+                    <div class="k-item">
+                        <strong>1.</strong> 좌측 메뉴 <strong>[시나리오] → [기본 시나리오]</strong> 아래에 있는 <strong>[폴백 블록]</strong>을 클릭합니다.
+                    </div>
+                    <div class="k-item">
+                        <strong>2.</strong> 화면 중간 <strong>‘스킬 / 파라미터 설정’</strong> 드롭다운에서 방금 만든 <strong><code>CrewPing 상태조회</code></strong> 스킬을 선택합니다.
+                    </div>
+                    <div class="k-item">
+                        <strong>3.</strong> 아래 <strong>‘봇 응답’</strong> 영역에서 기존 기본 텍스트 말풍선은 삭제(🗑️)하고, <strong>[스킬 데이터 사용]</strong>을 선택한 뒤 우측 상단 <strong>[저장]</strong>을 클릭합니다.
+                    </div>
+                </div>
+                <div class="k-tip">
+                    💡 <strong>선택 팁:</strong> 같은 방법으로 기본 시나리오의 <strong>[웰컴 블록]</strong>에도 <code>스킬 데이터 사용</code>을 연결해 두시면, 가족이 채팅방에 처음 들어오자마자 현재 상태를 먼저 인사해 줍니다.
+                </div>
+            </section>
+
+            <!-- STEP 5 & 실시간 웹훅 테스트 -->
+            <section class="k-card">
+                <div class="k-head">
+                    <span class="k-step-pill">STEP 5</span>
+                    <h3>챗봇 배포 &amp; 지금 바로 응답 테스트해보기 (1분)</h3>
+                </div>
+                <div class="k-list">
+                    <div class="k-item">
+                        <strong>1.</strong> 좌측 하단 메뉴 <strong>[배포]</strong> 클릭 → <strong>[배포하기]</strong> 버튼을 누르면 1~2분 내로 실제 카카오톡 채널 채팅방에 반영됩니다!
+                    </div>
+                </div>
+
+                <div class="kakao-mini-box" style="margin-top:4px;">
+                    <span class="kakao-mini-label">⚡ 실제 서버 응답 미리 테스트 (아래 버튼을 눌러보세요):</span>
+                    <div id="liveKakaoReplyBox" class="kakao-bubble">버튼을 누르면 현재 실서버 스킬 API를 호출해 실제 카톡 답변을 보여드립니다.</div>
+                    <div class="quick-reply-row">
+                        <button type="button" class="qr-chip" data-utter="지금 연락해도 될까?">💬 “지금 연락해도 될까?” 보내보기</button>
+                        <button type="button" class="qr-chip" data-utter="다음 비행 일정 알려줘">📅 “다음 비행 일정 알려줘” 보내보기</button>
+                    </div>
+                </div>
+            </section>
+
+            <a id="btnBottomBackCrewApp" href="./?mode=crew" class="primary-btn full-btn" style="text-decoration:none; text-align:center;">🧑‍✈️ 승무원 관리 화면으로 돌아가기</a>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const slug = (params.get("crew") || "default").toLowerCase().replace(/[^a-z0-9_-]/g, "") || "default";
+            const baseDir = window.location.origin + window.location.pathname.replace(/\/kakao-guide(?:\.html)?\/?$/, "/");
+            const isHttp = window.location.protocol.startsWith("http");
+
+            const crewQuery = slug !== "default" ? `crew=${encodeURIComponent(slug)}` : "";
+            const guidePath = isHttp ? `${baseDir}guide` : `${baseDir}guide.html`;
+            const backGuideUrl = crewQuery ? `${guidePath}?${crewQuery}&mode=crew` : `${guidePath}?mode=crew`;
+            const crewAppUrl = crewQuery ? `${baseDir}?${crewQuery}&mode=crew` : `${baseDir}?mode=crew`;
+            const familyAppUrl = crewQuery ? `${baseDir}?${crewQuery}` : baseDir;
+            const skillUrl = `${baseDir}api/kakao/skill${slug !== "default" ? `?crew=${encodeURIComponent(slug)}` : ""}`;
+
+            document.getElementById("btnBackToGuide").href = backGuideUrl;
+            document.getElementById("btnBottomBackCrewApp").href = crewAppUrl;
+            document.getElementById("skillUrlCode").textContent = skillUrl;
+
+            document.getElementById("btnCopyFamilyLinkHere").addEventListener("click", () => {
+                navigator.clipboard?.writeText(familyAppUrl);
+                const t = document.getElementById("copyFamilyToast");
+                t.textContent = "✅ 가족 공유용 링크가 복사되었습니다!";
+                setTimeout(() => { t.textContent = ""; }, 2500);
+            });
+
+            document.getElementById("btnCopySkillUrl").addEventListener("click", () => {
+                navigator.clipboard?.writeText(skillUrl);
+                const t = document.getElementById("copySkillToast");
+                t.textContent = "✅ 카카오 스킬 URL이 복사되었습니다!";
+                setTimeout(() => { t.textContent = ""; }, 2500);
+            });
+
+            const replyBox = document.getElementById("liveKakaoReplyBox");
+            document.querySelectorAll("[data-utter]").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    const utterance = btn.dataset.utter;
+                    if (!isHttp) {
+                        replyBox.textContent = "실서버(https://...) 주소에서 실행하시면 실제 스킬 API 응답을 바로 확인하실 수 있습니다.";
+                        return;
+                    }
+                    replyBox.textContent = "응답 불러오는 중...";
+                    try {
+                        const res = await fetch(skillUrl, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userRequest: { utterance } })
+                        });
+                        const json = await res.json();
+                        const text = json?.template?.outputs?.[0]?.simpleText?.text || "응답 형식 확인 필요";
+                        replyBox.textContent = text;
+                    } catch (_) {
+                        replyBox.textContent = "네트워크 요청 중 오류가 발생했습니다.";
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
